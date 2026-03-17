@@ -7,18 +7,29 @@
   <style>
     * { box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; margin: 0; padding: 1rem; min-height: 100vh;
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; margin: 0; padding: 1.2rem; min-height: 100vh;
       background: linear-gradient(180deg, #d4ebf7 0%, #e8f4e8 50%, #f0f7e8 100%);
       color: #2c3e50;
     }
-    h1 { font-size: 1.4rem; margin-bottom: 0.5rem; color: #1a3a52; }
-    .hint { color: #5a6c7d; font-size: 0.9rem; margin-bottom: 1rem; }
+    h1 {
+      font-size: 1.9rem;
+      margin: 0 0 0.4rem;
+      color: #1a3a52;
+      text-align: center;
+      font-weight: 800;
+    }
+    .hint {
+      color: #5a6c7d;
+      font-size: 1.05rem;
+      margin: 0 0 1.1rem;
+      text-align: center;
+    }
     .message { padding: 0.75rem; border-radius: 10px; margin-bottom: 1rem; display: none; }
     .message.success { background: #2d9d6b; color: #fff; display: block; box-shadow: 0 2px 8px rgba(45,157,107,0.3); }
     .message.error { background: #c75c5c; color: #fff; display: block; }
     /* 태블릿: 한 줄에 2~3개 회사 카드, 스크롤 줄이기 */
     .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; align-content: start; }
-    .section-title { font-size: 1.25rem; margin: 1rem 0 0.4rem; color: #1a6b4a; font-weight: 700; grid-column: 1 / -1; }
+    .section-title { font-size: 1.35rem; margin: 1.1rem 0 0.5rem; color: #1a6b4a; font-weight: 800; grid-column: 1 / -1; text-align: left; }
     .section-title:first-child { margin-top: 0; }
     .card {
       background: rgba(255,255,255,0.95); border-radius: 12px; padding: 0.5rem 0.7rem;
@@ -30,10 +41,20 @@
     .card .logo-wrap { width: 120px; max-height: none; height: auto; display: block; margin: 0; padding: 0; line-height: 0; }
     .card .logo-wrap img { width: 100%; height: auto; max-height: 96px; object-fit: contain; display: block; vertical-align: bottom; }
     .card .info { width: 100%; text-align: center; min-width: 0; margin: 0; padding: 0; }
-    .card .company { font-weight: 700; font-size: 1rem; }
-    .card .phone { font-size: 0.85rem; font-weight: 700; color: #1a2e50; margin-top: 0.1rem; }
+    .card .company { font-weight: 800; font-size: 1.2rem; }
+    .card .phone { font-size: 1rem; font-weight: 700; color: #1a2e50; margin-top: 0.15rem; }
     .card .card-foot { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 0.1rem; }
-    .card .btn { padding: 0.7rem 1.2rem; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; width: 100%; max-width: 120px; white-space: nowrap; }
+    .card .btn {
+      padding: 0.9rem 1.4rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      cursor: pointer;
+      width: 100%;
+      max-width: 140px;
+      white-space: nowrap;
+    }
     .card .btn.checkin { background: #2d9d6b; color: #fff; }
     .card .btn.checkin:hover { background: #248f5f; }
     .card .btn.checkout { background: #c75c5c; color: #fff; }
