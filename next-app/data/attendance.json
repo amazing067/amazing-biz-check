@@ -1,0 +1,144 @@
+[
+  {
+    "id": "a-1773724056005-1",
+    "managerId": "1",
+    "company": "KB손해보험",
+    "name": "배선우",
+    "phone": "010-2229-7535",
+    "logo": "KB손해보험.png",
+    "checkinAt": "2026-03-17T05:07:36.005Z",
+    "checkoutAt": "2026-03-17T05:26:34.173Z"
+  },
+  {
+    "id": "a-1773724551675-2",
+    "managerId": "2",
+    "company": "메리츠화재",
+    "name": "조전미",
+    "phone": "010-7234-1488",
+    "logo": "메리츠화재.png",
+    "checkinAt": "2026-03-17T05:15:51.675Z",
+    "checkoutAt": "2026-03-17T05:26:35.826Z"
+  },
+  {
+    "id": "a-1773724553085-3",
+    "managerId": "3",
+    "company": "롯데손해보험",
+    "name": "송승경",
+    "phone": "010-7924-4125",
+    "logo": "롯데손해보험.png",
+    "checkinAt": "2026-03-17T05:15:53.085Z",
+    "checkoutAt": "2026-03-17T05:26:37.027Z"
+  },
+  {
+    "id": "a-1773724554825-4",
+    "managerId": "4",
+    "company": "현대해상",
+    "name": "권유정",
+    "phone": "010-5282-9034",
+    "logo": "현대해상.png",
+    "checkinAt": "2026-03-17T05:15:54.825Z",
+    "checkoutAt": "2026-03-17T05:26:38.187Z"
+  },
+  {
+    "id": "a-1773724603076-5",
+    "managerId": "5",
+    "company": "삼성화재",
+    "name": "조민정",
+    "phone": "010-3299-5238",
+    "logo": "삼성화재.png",
+    "checkinAt": "2026-03-17T05:16:43.076Z",
+    "checkoutAt": "2026-03-17T05:26:39.446Z"
+  },
+  {
+    "id": "a-1773724604465-6",
+    "managerId": "6",
+    "company": "DB손해보험",
+    "name": "오미선",
+    "phone": "010-2532-7802",
+    "logo": "DB손해보험.png",
+    "checkinAt": "2026-03-17T05:16:44.465Z",
+    "checkoutAt": "2026-03-17T05:26:40.766Z"
+  },
+  {
+    "id": "a-1773724606036-7",
+    "managerId": "7",
+    "company": "농협손해보험",
+    "name": "김정연",
+    "phone": "010-7674-9193",
+    "logo": "농협손해보험.png",
+    "checkinAt": "2026-03-17T05:16:46.036Z",
+    "checkoutAt": "2026-03-17T05:26:41.907Z"
+  },
+  {
+    "id": "a-1773737011475-1",
+    "managerId": "1",
+    "company": "KB손해보험",
+    "name": "배선우",
+    "phone": "010-2229-7535",
+    "logo": "KB손해보험.png",
+    "suffix": null,
+    "color": "#FCAF16",
+    "checkinAt": "2026-03-17T08:43:31.476Z",
+    "checkoutAt": "2026-03-17T12:59:23.655Z"
+  },
+  {
+    "id": "a-1773739901211-2",
+    "managerId": "2",
+    "company": "메리츠화재",
+    "name": "조전미",
+    "phone": "010-7234-1488",
+    "logo": "메리츠화재.png",
+    "suffix": null,
+    "color": "#E60012",
+    "checkinAt": "2026-03-17T09:31:41.211Z",
+    "checkoutAt": "2026-03-17T12:59:26.612Z"
+  },
+  {
+    "id": "a-1773739902747-17",
+    "managerId": "17",
+    "company": "삼성생명",
+    "name": "설동인",
+    "phone": "010-5338-7434",
+    "logo": "삼성생명.png",
+    "suffix": null,
+    "color": "#003CDC",
+    "checkinAt": "2026-03-17T09:31:42.747Z",
+    "checkoutAt": "2026-03-17T12:59:25.264Z"
+  },
+  {
+    "id": "a-1773739904159-18",
+    "managerId": "18",
+    "company": "신한생명",
+    "name": "배수영",
+    "phone": "010-7931-8116",
+    "logo": "신한라이프.png",
+    "suffix": null,
+    "color": "#0046ff",
+    "checkinAt": "2026-03-17T09:31:44.159Z",
+    "checkoutAt": "2026-03-17T12:59:27.729Z"
+  },
+  {
+    "id": "a-1773739905387-19",
+    "managerId": "19",
+    "company": "KB생명",
+    "name": "한채원",
+    "phone": "010-8988-8976",
+    "logo": "KB라이프생명.png",
+    "suffix": null,
+    "color": "#FCAF16",
+    "checkinAt": "2026-03-17T09:31:45.387Z",
+    "checkoutAt": "2026-03-17T12:59:28.956Z"
+  },
+  {
+    "id": "a-1773739912188-20",
+    "managerId": "20",
+    "company": "DB생명",
+    "name": "김은희",
+    "phone": "010-8888-1221",
+    "logo": "DB생명.png",
+    "suffix": "지점장님",
+    "color": "#0080c6",
+    "checkinAt": "2026-03-17T09:31:52.188Z",
+    "checkoutAt": "2026-03-17T12:59:30.179Z"
+  }
+]

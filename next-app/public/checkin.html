@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>출근 / 퇴근 체크</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; margin: 0; padding: 1.2rem; min-height: 100vh;
+      background: linear-gradient(180deg, #d4ebf7 0%, #e8f4e8 50%, #f0f7e8 100%);
+      color: #2c3e50;
+    }
+    h1 {
+      font-size: 1.9rem;
+      margin: 0 0 0.4rem;
+      color: #1a3a52;
+      text-align: center;
+      font-weight: 800;
+    }
+    .hint {
+      color: #5a6c7d;
+      font-size: 1.05rem;
+      margin: 0 0 1.1rem;
+      text-align: center;
+    }
+    /* 태블릿: 한 줄에 2~3개 회사 카드, 스크롤 줄이기 */
+    .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; align-content: start; }
+    .section-title { font-size: 1.35rem; margin: 1.1rem 0 0.5rem; color: #1a6b4a; font-weight: 800; grid-column: 1 / -1; text-align: left; }
+    .section-title:first-child { margin-top: 0; }
+    .card {
+      background: rgba(255,255,255,0.95); border-radius: 12px; padding: 0.5rem 0.7rem;
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid rgba(255,255,255,0.95);
+    }
+    .card.info { border-left: 4px solid #2d9d6b; }
+    /* 로고: 고정 높이 박스 없이 이미지 크기만큼만 → 바로 밑에 글씨 붙음 */
+    .card .logo-wrap { width: 120px; max-height: none; height: auto; display: block; margin: 0; padding: 0; line-height: 0; }
+    .card .logo-wrap img { width: 100%; height: auto; max-height: 96px; object-fit: contain; display: block; vertical-align: bottom; }
+    .card .info { width: 100%; text-align: center; min-width: 0; margin: 0; padding: 0; }
+    .card .company { font-weight: 800; font-size: 1.2rem; }
+    .card .company .company-label { font-weight: 800; }
+    .card .company .manager-name { font-weight: 800; color: #111; }
+    .card .phone { font-size: 1rem; font-weight: 700; color: #1a2e50; margin-top: 0.15rem; }
+    .card .card-foot { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 0.1rem; }
+    .card .btn {
+      padding: 0.9rem 1.4rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      cursor: pointer;
+      width: 100%;
+      max-width: 140px;
+      white-space: nowrap;
+    }
+    .card .btn.checkin { background: #2d9d6b; color: #fff; }
+    .card .btn.checkin:hover { background: #248f5f; }
+    .card .btn.checkout { background: #c75c5c; color: #fff; }
+    .card .btn.checkout:hover { background: #b35050; }
+    .card .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .empty { color: #5a6c7d; text-align: center; padding: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>출근 / 퇴근 체크</h1>
+  <p class="hint">한 번 누르면 출근, 같은 사람을 다시 누르면 퇴근 처리됩니다.</p>
+  <div id="list" class="list"></div>
+
+  <script>
+    const listEl = document.getElementById('list');
+    // 상단 메시지 박스를 사용하지 않습니다.
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function cardHtml(m, record) {
+      const isIn = !!record;
+      const btnClass = isIn ? 'checkout' : 'checkin';
+      const btnText = isIn ? '퇴근' : '출근';
+      const cardClass = isIn ? 'card info' : 'card';
+      const dataAttr = isIn ? `data-record-id="${record.id}"` : `data-manager-id="${m.id}"`;
+      const logoUrl = m.logo ? '/logos/' + encodeURIComponent(m.logo) : '';
+      const logoHtml = logoUrl
+        ? `<div class="logo-wrap"><img src="${logoUrl}" alt="" onerror="this.parentElement.style.display='none'"></div>`
+        : '';
+      const companyLabel = `<span class="company-label"${m.color ? ` style="color:${escapeHtml(m.color)}"` : ''}>${escapeHtml(m.company)}</span>`;
+      const managerLabel = m.name
+        ? ` <span class="manager-name">${escapeHtml(m.name)}${m.suffix ? ' ' + escapeHtml(m.suffix) : ''}</span>`
+        : '';
+      return `
+        <div class="${cardClass}">
+          ${logoHtml}
+          <div class="info">
+            <div class="company">${companyLabel}${managerLabel}</div>
+            <div class="phone">${escapeHtml(m.phone)}</div>
+          </div>
+          <div class="card-foot">
+            <button type="button" class="btn ${btnClass}" ${dataAttr}>${btnText}</button>
+          </div>
+        </div>`;
+    }
+
+    function render(managers, attendance) {
+      const present = attendance.filter((r) => !r.checkoutAt);
+      if (!managers.length) {
+        listEl.innerHTML = '<p class="empty">등록된 매니저가 없습니다.</p>';
+        return;
+      }
+      const damage = managers.filter((m) => m.category === '손해보험');
+      const life = managers.filter((m) => m.category === '생명보험');
+      let html = '';
+      if (damage.length) {
+        html += '<h3 class="section-title">손해보험</h3>';
+        html += damage.map((m) => cardHtml(m, present.find((r) => r.managerId === m.id))).join('');
+      }
+      if (life.length) {
+        html += '<h3 class="section-title">생명보험</h3>';
+        html += life.map((m) => cardHtml(m, present.find((r) => r.managerId === m.id))).join('');
+      }
+      listEl.innerHTML = html;
+
+      listEl.querySelectorAll('.btn.checkin').forEach((b) => {
+        b.addEventListener('click', () => doCheckin(b.dataset.managerId));
+      });
+      listEl.querySelectorAll('.btn.checkout').forEach((b) => {
+        b.addEventListener('click', () => doCheckout(b.dataset.recordId));
+      });
+    }
+
+    function doCheckin(managerId) {
+      const btn = listEl.querySelector(`.btn[data-manager-id="${managerId}"]`);
+      if (btn) btn.disabled = true;
+      fetch('/api/attendance/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ managerId }),
+      })
+        .then((r) => r.json())
+        .then(() => {
+          load();
+        })
+        .catch(() => {
+          load();
+        });
+    }
+
+    function doCheckout(recordId) {
+      const btn = listEl.querySelector(`.btn[data-record-id="${recordId}"]`);
+      if (btn) btn.disabled = true;
+      fetch('/api/attendance/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recordId }),
+      })
+        .then((r) => r.json())
+        .then(() => {
+          load();
+        })
+        .catch(() => {
+          load();
+        });
+    }
+
+    function load() {
+      Promise.all([fetch('/api/managers').then((r) => r.json()), fetch('/api/attendance/today').then((r) => r.json())])
+        .then(([managers, attendance]) => render(managers, attendance))
+        .catch(() => {
+          listEl.innerHTML = '<p class="empty">목록을 불러올 수 없습니다.</p>';
+        });
+    }
+
+    load();
+    setInterval(load, 10000);
+  </script>
+</body>
+</html>

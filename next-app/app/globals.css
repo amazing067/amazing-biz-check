@@ -1,0 +1,90 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Malgun Gothic", system-ui, -apple-system, BlinkMacSystemFont,
+    "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(180deg, #d4ebf7 0%, #e8f4e8 45%, #f0f7e8 100%);
+  color: #2c3e50;
+}
+
+.landing-root {
+  min-height: 100vh;
+  padding: 3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1.8rem;
+}
+
+.landing-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.landing-brand-logo {
+  max-width: 260px;
+  max-height: 140px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 0 14px rgba(15, 23, 42, 0.7));
+}
+
+.landing-brand-name {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #0f172a;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+}
+
+.landing-title {
+  margin: 0 0 0.4rem;
+  font-size: 2.4rem;
+  color: #1a3a52;
+  text-align: center;
+  font-weight: 800;
+}
+
+.landing-subtitle {
+  margin: 0 0 1.8rem;
+  font-size: 1.25rem;
+  color: #334155;
+  text-align: center;
+  font-weight: 600;
+}
+
+.landing-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-button {
+  display: block;
+  padding: 1.4rem 2.4rem;
+  margin-bottom: 1.1rem;
+  min-width: 320px;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f766e;
+  text-decoration: none;
+  border-radius: 18px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.98);
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.landing-button:hover {
+  background: #ffffff;
+  box-shadow: 0 7px 24px rgba(0, 0, 0, 0.18);
+}
