@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>매니저 출석 - TV 대시보드</title>
+  <style>
+    /* 100인치 TV 1920x1080 기준: 한 화면 고정, 레이아웃 흔들림 방지 */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; overflow-x: hidden; }
+    body {
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: linear-gradient(180deg, #d4ebf7 0%, #e0f0e8 35%, #e8f4e8 70%, #f0f7e8 100%);
+      color: #2c3e50; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .quote {
+      flex-shrink: 0;
+      height: 7vh; min-height: 64px; padding: 0.3rem 2rem; text-align: center;
+      font-size: clamp(2.3rem, 6.2vh, 3.4rem); line-height: 1.35;
+      background: linear-gradient(120deg, #1d3557 0%, #457b9d 30%, #4ade80 65%, #f97316 100%);
+      background-size: 260% 100%;
+      border-bottom: 2px solid rgba(26, 107, 74, 0.25);
+      color: #f9fafb; font-style: italic;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.16);
+      display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.35em;
+      position: relative; overflow: hidden;
+      animation: quote-bg-move 10s linear infinite, quote-glow 4s ease-in-out infinite;
+    }
+    .quote::before {
+      content: '“';
+      position: absolute; left: 1.2rem; top: 50%; transform: translateY(-52%);
+      font-size: 3.4rem; color: rgba(15,23,42,0.18);
+    }
+    .quote::after {
+      content: ''; position: absolute; inset: -20%;
+      background: radial-gradient(circle at 0% 0%, rgba(255,255,255,0.5), transparent 60%),
+                  radial-gradient(circle at 100% 0%, rgba(255,255,255,0.45), transparent 55%);
+      mix-blend-mode: screen;
+      opacity: 0; pointer-events: none;
+      animation: quote-shine 7s ease-in-out infinite;
+    }
+    .quote .label { color: #fefce8; font-style: normal; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; text-shadow: 0 0 10px rgba(15,23,42,0.6); }
+    .quote #quoteText { font-weight: 700; text-shadow: 0 0 16px rgba(15,23,42,0.6), 0 0 30px rgba(250,250,250,0.8); transform-origin: center; animation: quote-text-breathe 4.5s ease-in-out infinite; }
+    /* 왼쪽 연락처 영역을 조금 줄이고, 오른쪽(전략/출근 매니저) 영역을 더 넓게 */
+    .main { flex: 1; display: grid; grid-template-columns: 2.6fr 2.4fr; gap: 0; min-height: 0; overflow: hidden; }
+    .panel {
+      padding: 0.2rem 0.6rem; min-height: 0; display: flex; flex-direction: column;
+      background: rgba(255,255,255,0.5); border-right: 1px solid rgba(255,255,255,0.7);
+    }
+    .panel.left { overflow: hidden; }
+    /* 오른쪽 패널을 왼쪽 연락처 영역과 살짝 띄워, 생명보험 끝과의 경계를 오늘 출근한 매니저 카드 간격 정도로 맞춤 */
+    .panel.right { overflow: hidden; display: flex; flex-direction: column; border-left: 3px solid #7b8fa3; padding-left: 0.75rem; }
+    .right-top { flex: 1.2; min-height: 0; padding: 0; background: linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(248,252,250,0.9) 100%); border-bottom: 2px solid rgba(26, 107, 74, 0.15); overflow: hidden; display: flex; flex-direction: column; }
+    /* 슬라이드 아래 경계선과 오늘 출근한 매니저 카드의 윗 라인이 미세하게 어긋나는 것을 보정 (경계선 1px 겹치게) */
+    .right-bottom { flex: 0.8; min-height: 0; padding: 0 0.8rem 0.35rem; margin-top: -1px; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: row; gap: 0.5rem; }
+    .today-present-panel,
+    .today-extra-panel { flex: 1; min-width: 0; padding: 0.35rem 0.6rem; border-radius: 10px; background: rgba(255,255,255,0.7); box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; overflow: hidden; }
+    .today-present-panel { border-left: 4px solid rgba(26,107,74,0.6); }
+    .today-extra-panel { border-left: 4px solid rgba(26,107,74,0.25); }
+    .today-extra-title { font-size: clamp(0.95rem, 1.7vh, 1.2rem); margin: 0 0 0.25rem; color: #1a3a52; }
+    .today-extra-body { font-size: clamp(0.85rem, 1.6vh, 1.05rem); margin: 0; color: #5a6c7d; line-height: 1.5; }
+    .pdf-slideshow { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+    .pdf-slideshow canvas { width: 100%; height: 100%; border-radius: 6px; box-shadow: 0 0 10px rgba(15,23,42,0.25); background: #fff; display: block; }
+    /* 추가 안내 영역 배너: 어메이징 사업부 */
+    .amazing-banner {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: linear-gradient(120deg, #0f172a 0%, #1d4ed8 35%, #22c55e 70%, #f97316 100%);
+      box-shadow: 0 4px 18px rgba(15,23,42,0.35);
+      color: #f9fafb;
+      padding: 0.25rem 0.4rem 0.3rem;
+      gap: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .amazing-banner-issue {
+      position: absolute;
+      top: 0.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: clamp(1.5rem, 3.4vh, 2.2rem);
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      color: #facc15; /* 더 잘 보이는 노란색 */
+      text-shadow: 0 0 12px rgba(15,23,42,0.9), 0 0 22px rgba(250, 250, 250, 0.7);
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+    .amazing-banner-logo {
+      max-width: 92%;
+      max-height: 70%;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 0 12px rgba(15,23,42,0.7));
+      margin-bottom: -0.4rem; /* 로고와 텍스트 사이 간격을 더 줄여 바로 아래로 붙게 */
+    }
+    .amazing-banner-text {
+      font-size: clamp(1.5rem, 3.4vh, 2.2rem);
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-align: center;
+      text-shadow: 0 0 14px rgba(15,23,42,0.7), 0 0 26px rgba(255,255,255,0.5);
+      white-space: nowrap;
+      margin-top: 0; /* 로고 바로 아래에 붙도록 위 여백 제거 */
+    }
+    .right-top h2 { font-size: clamp(0.95rem, 1.6vh, 1.15rem); margin: 0 0 0.4rem; color: #1a6b4a; font-weight: 700; }
+    .right-bottom h2 {
+      font-size: clamp(1.15rem, 3.2vh, 1.75rem); margin: 0 0 0.35rem; font-weight: 800; flex-shrink: 0;
+      background: linear-gradient(120deg, #5b21b6 0%, #7c3aed 35%, #a855f7 65%, #ec4899 100%);
+      background-size: 220% 100%;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      letter-spacing: -0.02em; line-height: 1.5; text-align: center;
+      position: relative;
+      padding: 0.15em 0;
+      animation: title-shimmer 4s ease-in-out infinite, title-glow 3s ease-in-out infinite;
+    }
+    .right-bottom h2::after {
+      content: ''; position: absolute; inset: -2px -50%; z-index: -1;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 48%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.35) 52%, transparent 100%);
+      animation: title-shine 3.5s ease-in-out infinite;
+    }
+    @keyframes title-shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    @keyframes title-glow {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(129, 140, 248, 0.55)) drop-shadow(0 0 18px rgba(236, 72, 153, 0.35)); }
+      50% { filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.9)) drop-shadow(0 0 32px rgba(236, 72, 153, 0.55)); }
+    }
+    @keyframes title-shine {
+      0% { transform: translateX(-100%); opacity: 0; }
+      40% { opacity: 1; }
+      60% { opacity: 1; }
+      100% { transform: translateX(100%); opacity: 0; }
+    }
+    .present-tagline {
+      font-size: clamp(1rem, 2.2vh, 1.3rem); color: #1a3a52; margin: 0 0 0.5rem; line-height: 1.45;
+      font-weight: 700; flex-shrink: 0; text-align: center;
+    }
+    .right-strategy { font-size: clamp(0.85rem, 1.5vh, 1rem); color: #5a6c7d; min-height: 2rem; }
+    .panel h2 { font-size: clamp(1rem, 1.8vh, 1.25rem); margin: 0 0 0.2rem; color: #1a3a52; font-weight: 600; flex-shrink: 0; }
+    /* 오늘 출근한 매니저 제목: .panel h2보다 나중에 적용되도록 구체적 선택자 + 명언과 동일 크기 */
+    .panel.right .right-bottom h2 { font-size: clamp(1.15rem, 3.2vh, 1.75rem); font-weight: 800; margin: 0 0 0.35rem; }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 0.8rem; flex: 1; min-height: 0; align-content: start; }
+    .contact-col { min-height: 0; display: flex; flex-direction: column; }
+    .contact-col:first-child { border-right: 3px solid #7b8fa3; padding-right: 1.2rem; margin-right: 0.25rem; }
+    .contact-col:last-child { padding-left: 0.8rem; padding-right: 1.5rem; }
+    .section-title { font-size: clamp(1rem, 2vh, 1.25rem); margin: 0.2rem 0; color: #1a6b4a; font-weight: 700; flex-shrink: 0; }
+    .manager-list { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+    /* 행 높이 고정 → 레이아웃 흔들림 방지. (왼쪽 손해/생명보험 영역용) */
+    .manager-row {
+      flex: 0 0 80px; height: 80px;
+      padding: 0 0; border-bottom: 1px solid rgba(0,0,0,0.08);
+      display: flex; align-items: center; gap: 0.5rem; justify-content: flex-start;
+      font-size: clamp(1.25rem, 3vh, 1.55rem); color: #2c3e50;
+    }
+    /* 로고: 고정 박스 없이 원본 비율 유지, 행 안에서만 최대 높이 제한 */
+    .manager-row .logo-wrap {
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .manager-row .logo-wrap img {
+      height: 78px; width: auto; max-height: 78px; max-width: 280px;
+      object-fit: contain; display: block;
+    }
+    /* 회사 이름은 일단 화면에서는 숨기고(언제든 다시 보이게 할 수 있도록 CSS만 변경) */
+    .manager-row .company-name {
+      display: none;
+    }
+    /* 매니저 이름은 독립 span으로, 오른쪽 정렬해서 전화번호 쪽으로 붙이기 */
+    .manager-row .manager-name {
+      margin-left: auto; margin-right: 1.4rem;
+      text-align: right; min-width: 8ch;
+      font-weight: 700; font-size: inherit; color: #111;
+    }
+    .manager-row .phone { flex-shrink: 0; font-size: inherit; font-weight: 700; color: #1a2e50; margin-left: 0; padding-left: 0; text-align: right; min-width: 9ch; }
+    .present { position: relative; overflow: hidden; }
+    .present .manager-row {
+      /* 오늘 출근한 매니저 영역의 각 행만 더 낮게 (5명 이상 들어가도록) */
+      flex: 0 0 60px; height: 60px; border-left: 4px solid #7c3aed; padding-left: 0.4rem;
+      background: rgba(255,255,255,0.4); font-size: clamp(0.95rem, 2.2vh, 1.2rem);
+      animation: present-row-sparkle 3.5s ease-in-out infinite;
+      position: relative; overflow: hidden;
+    }
+    .present .manager-row .logo-wrap img {
+      height: 50px; max-height: 50px; width: auto;
+    }
+    /* 오늘 출근한 매니저 쪽은 이름/전화번호만 더 크게 강조 */
+    .present .manager-row .manager-name,
+    .present .manager-row .phone {
+      font-size: clamp(1.15rem, 2.8vh, 1.45rem);
+    }
+    /* 오늘 출근한 매니저 쪽 전화번호는 오른쪽에서 살짝 안쪽으로 들여쓰기 */
+    .present .manager-row .phone { padding-right: 0.8rem; }
+    .present .manager-row::before {
+      content: ''; position: absolute; inset: 0; z-index: 0;
+      background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.4) 48%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.4) 52%, transparent 100%);
+      animation: row-shine 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .present .manager-row > * { position: relative; z-index: 1; }
+    .present .manager-row:nth-child(1) { animation-delay: 0s; }
+    .present .manager-row:nth-child(2) { animation-delay: 0.25s; }
+    .present .manager-row:nth-child(3) { animation-delay: 0.5s; }
+    .present .manager-row:nth-child(4) { animation-delay: 0.75s; }
+    .present .manager-row:nth-child(5) { animation-delay: 1s; }
+    .present .manager-row:nth-child(6) { animation-delay: 1.25s; }
+    .present .manager-row:nth-child(7) { animation-delay: 1.5s; }
+    .present .manager-row:nth-child(8) { animation-delay: 1.75s; }
+    .present .manager-row:nth-child(n+9) { animation-delay: 2s; }
+    @keyframes present-row-sparkle {
+      0%, 100% {
+        background: rgba(255,255,255,0.55);
+        box-shadow: 0 0 0 rgba(129, 140, 248, 0);
+        border-left-color: #7c3aed;
+        transform: scale(1);
+      }
+      50% {
+        background: rgba(245, 243, 255, 0.95);
+        box-shadow: 0 0 14px rgba(129, 140, 248, 0.45), 0 0 24px rgba(236, 72, 153, 0.35);
+        border-left-color: #a855f7;
+        transform: scale(1.01);
+      }
+    }
+    @keyframes row-shine {
+      0%, 100% { opacity: 0; }
+      40%, 60% { opacity: 0.8; }
+    }
+    @keyframes quote-bg-move {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes quote-glow {
+      0%, 100% { box-shadow: 0 4px 18px rgba(0,0,0,0.16); }
+      50% { box-shadow: 0 8px 30px rgba(15,23,42,0.6); }
+    }
+    @keyframes quote-shine {
+      0%, 100% { opacity: 0; transform: translateX(-10%); }
+      40% { opacity: 1; transform: translateX(0); }
+      60% { opacity: 1; transform: translateX(8%); }
+    }
+    @keyframes quote-text-breathe {
+      0%, 100% { transform: scale(1); letter-spacing: 0; }
+      50% { transform: scale(1.03); letter-spacing: 0.03em; }
+    }
+    .empty { color: #5a6c7d; padding: 0.3rem 0; font-size: clamp(0.9rem, 2vh, 1.1rem); }
+  </style>
+</head>
+<body>
+  <header class="quote"><span class="label">오늘의 명언</span> — <span id="quoteText">불러오는 중...</span></header>
+  <div class="main">
+    <aside class="panel left">
+      <div id="allManagers"></div>
+    </aside>
+    <section class="panel right">
+      <div class="right-top">
+        <div class="pdf-slideshow">
+          <canvas id="companyPdfCanvas"></canvas>
+        </div>
+      </div>
+      <div class="right-bottom">
+        <div class="today-present-panel">
+          <h2>오늘 출근한 매니저</h2>
+          <p class="present-tagline">언제든 설계·상담 요청해 주세요. 바로바로 도와드릴게요.</p>
+          <div id="present" class="present"></div>
+        </div>
+        <div class="today-extra-panel">
+          <div class="amazing-banner">
+            <div class="amazing-banner-issue">3월 POINT !!</div>
+            <img src="/logos/amazinglogo.png" alt="어메이징 로고" class="amazing-banner-logo" onerror="this.style.display='none'">
+            <div class="amazing-banner-text">어메이징&nbsp;사업부</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    const quoteEl = document.getElementById('quoteText');
+    const allEl = document.getElementById('allManagers');
+    const presentEl = document.getElementById('present');
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function loadQuote() {
+      fetch('/api/quote')
+        .then((r) => r.json())
+        .then((d) => { quoteEl.textContent = d.quote || '오늘도 좋은 하루 되세요.'; })
+        .catch(() => { quoteEl.textContent = '오늘도 좋은 하루 되세요.'; });
+    }
+
+    function rowHtml(m) {
+      const logoUrl = m.logo ? '/logos/' + encodeURIComponent(m.logo) : '';
+      const logoHtml = logoUrl
+        ? `<div class="logo-wrap"><img src="${logoUrl}" alt="" onerror="this.parentElement.innerHTML=''"></div>`
+        : '<div class="logo-wrap"></div>';
+      const companyText = escapeHtml(m.company);
+      const managerText = m.name
+        ? escapeHtml(m.name) + (m.suffix ? ' ' + escapeHtml(m.suffix) : '')
+        : '';
+      const companyColor = m.color ? escapeHtml(m.color) : '';
+      const companyStyleAttr = companyColor ? ` style="color:${companyColor}"` : '';
+      return `<div class="manager-row">
+        ${logoHtml}
+        <span class="company-name"><span class="company-label"${companyStyleAttr}>${companyText}</span></span>
+        <span class="manager-name">${managerText || ''}</span>
+        <span class="phone">${escapeHtml(m.phone)}</span>
+      </div>`;
+    }
+
+    function loadManagers() {
+      fetch('/api/managers')
+        .then((r) => r.json())
+        .then((list) => {
+          if (!list.length) {
+            allEl.innerHTML = '<p class="empty">등록된 매니저가 없습니다.</p>';
+            return;
+          }
+          const damage = list.filter((m) => m.category === '손해보험');
+          const life = list.filter((m) => m.category === '생명보험');
+          let html = '<div class="contact-grid">';
+          html += '<div class="contact-col"><h3 class="section-title">손해보험</h3><div class="manager-list">';
+          html += damage.length ? damage.map((m) => rowHtml(m)).join('') : '<p class="empty">-</p>';
+          html += '</div></div><div class="contact-col"><h3 class="section-title">생명보험</h3><div class="manager-list">';
+          html += life.length ? life.map((m) => rowHtml(m)).join('') : '<p class="empty">-</p>';
+          html += '</div></div></div>';
+          allEl.innerHTML = html || '<p class="empty">등록된 매니저가 없습니다.</p>';
+        })
+        .catch(() => { allEl.innerHTML = '<p class="empty">목록을 불러올 수 없습니다.</p>'; });
+    }
+
+    function loadPresent() {
+      fetch('/api/attendance/today')
+        .then((r) => r.json())
+        .then((records) => {
+          const present = records.filter((r) => !r.checkoutAt);
+          if (present.length === 0) {
+            presentEl.innerHTML = '<p class="empty">출근한 매니저가 없습니다.</p>';
+            return;
+          }
+          presentEl.innerHTML = present
+            .map(
+              (r) => {
+                const logoUrl = r.logo ? '/logos/' + encodeURIComponent(r.logo) : '';
+                const logoHtml = logoUrl
+                  ? `<div class="logo-wrap"><img src="${logoUrl}" alt="" onerror="this.parentElement.innerHTML=''"></div>`
+                  : '<div class="logo-wrap"></div>';
+                const companyText = escapeHtml(r.company);
+                const managerText = r.name
+                  ? escapeHtml(r.name) + (r.suffix ? ' ' + escapeHtml(r.suffix) : '')
+                  : '';
+                const companyColor = r.color ? escapeHtml(r.color) : '';
+                const companyStyleAttr = companyColor ? ` style="color:${companyColor}"` : '';
+                return `<div class="manager-row">
+                  ${logoHtml}
+                  <span class="company-name"><span class="company-label"${companyStyleAttr}>${companyText}</span></span>
+                  <span class="manager-name">${managerText || ''}</span>
+                  <span class="phone">${escapeHtml(r.phone)}</span>
+                </div>`;
+              }
+            )
+            .join('');
+        })
+        .catch(() => { presentEl.innerHTML = '<p class="empty">출근 목록을 불러올 수 없습니다.</p>'; });
+    }
+
+    function refresh() {
+      loadQuote();
+      loadManagers();
+      loadPresent();
+    }
+
+    refresh();
+    setInterval(refresh, 4000);
+
+    /* 회사 소개 PDF 자동 슬라이드 (페이지당 10초) */
+    (function setupCompanyPdfSlideshow() {
+      const canvas = document.getElementById('companyPdfCanvas');
+      if (!canvas || !window['pdfjsLib']) return;
+
+      const url = '/docs/company-intro.pdf';
+      const displaySeconds = 10;
+      let pdfDoc = null;
+      let currentPage = 1;
+      let isRendering = false;
+
+      const ctx = canvas.getContext('2d');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+      function renderPage(num) {
+        if (!pdfDoc) return;
+        isRendering = true;
+        pdfDoc.getPage(num).then(function (page) {
+          const container = canvas.parentElement;
+          const containerWidth = container.clientWidth || 400;
+          const containerHeight = container.clientHeight || 300;
+          const viewport = page.getViewport({ scale: 1 });
+          // 컨테이너를 가득 채우도록(cover) 가로/세로 중 더 큰 비율로 스케일
+          const scaleX = containerWidth / viewport.width;
+          const scaleY = containerHeight / viewport.height;
+          const scale = Math.max(scaleX, scaleY);
+
+          const scaledViewport = page.getViewport({ scale });
+          canvas.width = scaledViewport.width;
+          canvas.height = scaledViewport.height;
+
+          const renderContext = {
+            canvasContext: ctx,
+            viewport: scaledViewport,
+          };
+          const renderTask = page.render(renderContext);
+          renderTask.promise.then(function () {
+            isRendering = false;
+          });
+        });
+      }
+
+      pdfjsLib.getDocument(url).promise
+        .then(function (doc) {
+          pdfDoc = doc;
+          renderPage(currentPage);
+          setInterval(function () {
+            if (isRendering || !pdfDoc) return;
+            currentPage = currentPage % pdfDoc.numPages + 1;
+            renderPage(currentPage);
+          }, displaySeconds * 1000);
+        })
+        .catch(function () {
+          const ctx = canvas.getContext('2d');
+          canvas.width = 400;
+          canvas.height = 200;
+          ctx.fillStyle = '#5a6c7d';
+          ctx.font = '16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('회사 소개 PDF를 불러올 수 없습니다.', canvas.width / 2, canvas.height / 2);
+        });
+    })();
+  </script>
+</body>
+</html>
