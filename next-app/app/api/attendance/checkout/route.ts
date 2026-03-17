@@ -1,13 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const filePath = path.join(process.cwd(), 'data', 'attendance.json');
-
-function readAll(): any[] {
-  if (!fs.existsSync(filePath)) return [];
-  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as any[];
-}
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,14 +8,40 @@ export async function POST(req: NextRequest) {
     if (!recordId) {
       return NextResponse.json({ error: 'recordId-required' }, { status: 400 });
     }
-    const all = readAll();
-    const idx = all.findIndex((r) => r.id === recordId);
-    if (idx === -1) {
-      return NextResponse.json({ error: 'not-found' }, { status: 404 });
+
+    const nowIso = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
+      .from('attendance')
+      .update({ checkout_at: nowIso })
+      .eq('id', recordId)
+      .select('*')
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // not found
+        return NextResponse.json({ error: 'not-found' }, { status: 404 });
+      }
+      console.error('supabase checkout update error', error);
+      return NextResponse.json({ error: 'failed-to-checkout' }, { status: 500 });
     }
-    all[idx].checkoutAt = new Date().toISOString();
-    fs.writeFileSync(filePath, JSON.stringify(all, null, 2), 'utf8');
-    return NextResponse.json(all[idx]);
+
+    const response = {
+      id: data.id,
+      managerId: data.manager_id,
+      company: data.company,
+      name: data.name,
+      phone: data.phone,
+      logo: data.logo,
+      color: data.color,
+      suffix: data.suffix,
+      date: data.date,
+      checkinAt: data.checkin_at,
+      checkoutAt: data.checkout_at,
+    };
+
+    return NextResponse.json(response);
   } catch (err) {
     console.error('attendance checkout error', err);
     return NextResponse.json({ error: 'failed-to-checkout' }, { status: 500 });

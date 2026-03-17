@@ -1,19 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const attendanceFilePath = path.join(process.cwd(), 'data', 'attendance.json');
-const managersFilePath = path.join(process.cwd(), 'data', 'managers.json');
-
-function readAttendance(): any[] {
-  if (!fs.existsSync(attendanceFilePath)) return [];
-  return JSON.parse(fs.readFileSync(attendanceFilePath, 'utf8')) as any[];
-}
-
-function readManagers(): any[] {
-  if (!fs.existsSync(managersFilePath)) return [];
-  return JSON.parse(fs.readFileSync(managersFilePath, 'utf8')) as any[];
-}
+import { supabaseAdmin } from '@/lib/supabase';
+import managers from '@/data/managers.json';
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,18 +10,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'managerId-required' }, { status: 400 });
     }
 
-    const managers = readManagers();
-    const manager = managers.find((m) => String(m.id) === String(managerId));
+    const manager = (managers as any[]).find((m) => String(m.id) === String(managerId));
     if (!manager) {
       return NextResponse.json({ error: 'manager-not-found' }, { status: 404 });
     }
 
-    const all = readAttendance();
     const today = new Date().toISOString().slice(0, 10);
+    const nowIso = new Date().toISOString();
 
     const record = {
-      id: `a-${Date.now()}-${managerId}`,
-      managerId: String(managerId),
+      manager_id: String(managerId),
       company: manager.company,
       name: manager.name,
       phone: manager.phone,
@@ -42,13 +27,32 @@ export async function POST(req: NextRequest) {
       color: manager.color ?? null,
       suffix: manager.suffix ?? null,
       date: today,
-      checkinAt: new Date().toISOString(),
+      checkin_at: nowIso,
+      checkout_at: null as string | null,
     };
 
-    all.push(record);
-    fs.writeFileSync(attendanceFilePath, JSON.stringify(all, null, 2), 'utf8');
+    const { data, error } = await supabaseAdmin.from('attendance').insert(record).select('*').single();
+    if (error) {
+      console.error('supabase insert error', error);
+      return NextResponse.json({ error: 'failed-to-checkin' }, { status: 500 });
+    }
 
-    return NextResponse.json(record);
+    // TV/태블릿이 쓰던 기존 JSON 구조에 맞춰 변환해서 반환
+    const response = {
+      id: data.id,
+      managerId: data.manager_id,
+      company: data.company,
+      name: data.name,
+      phone: data.phone,
+      logo: data.logo,
+      color: data.color,
+      suffix: data.suffix,
+      date: data.date,
+      checkinAt: data.checkin_at,
+      checkoutAt: data.checkout_at,
+    };
+
+    return NextResponse.json(response);
   } catch (err) {
     console.error('attendance checkin error', err);
     return NextResponse.json({ error: 'failed-to-checkin' }, { status: 500 });
