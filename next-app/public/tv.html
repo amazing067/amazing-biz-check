@@ -27,7 +27,8 @@
 
     .top {
       display: grid;
-      grid-template-columns: 42% 58%;
+      /* 오른쪽(PDF) 영역을 더 크게 */
+      grid-template-columns: 40% 60%;
       gap: 0;
       min-height: 0;
     }
@@ -202,7 +203,8 @@
                   radial-gradient(90% 100% at 90% 20%, rgba(236, 72, 153, 0.22), transparent 55%),
                   linear-gradient(160deg, #0b0720 0%, #1a0b45 40%, #2b0a57 72%, #160633 100%);
       color: #e9e7ff;
-      padding: 2.2vh 1.8vw 1.8vh;
+      /* 패널 바깥쪽 여백을 줄여 PDF가 더 꽉 차 보이게 */
+      padding: 0.6vh 0.6vw;
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -212,12 +214,13 @@
       position: relative;
       flex: 1;
       min-height: 0;
+      /* PDF를 오른쪽 패널에 '꽉 차게' 보여주기 위해 내부 여백 제거 */
       border-radius: 18px;
       background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
       border: 1px solid rgba(255,255,255,0.12);
       box-shadow: inset 0 0 0 1px rgba(15,23,42,0.25), 0 18px 40px rgba(0,0,0,0.25);
       overflow: hidden;
-      padding: 1.8vh 1.5vw;
+      padding: 0;
     }
     .pdf-wrap {
       position: absolute;
@@ -227,12 +230,35 @@
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.14);
       box-shadow: 0 14px 34px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .pdf-wrap canvas {
-      width: 100%;
-      height: 100%;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
       display: block;
       background: #fff;
+    }
+    .pdf-wrap #companyPdfCanvasBg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      max-height: none;
+      background: transparent;
+      filter: blur(18px) saturate(1.15) contrast(1.05);
+      opacity: 0.35;
+      transform: scale(1.06);
+      transform-origin: center;
+      pointer-events: none;
+    }
+    .pdf-wrap #companyPdfCanvas {
+      position: relative;
+      z-index: 1;
     }
     .pdf-wrap .pdf-fallback {
       position: absolute;
@@ -417,6 +443,7 @@
       <section class="panel yookha-panel" aria-label="회사 소개 PDF">
         <div class="yookha-left">
           <div class="pdf-wrap" aria-label="회사 소개 PDF 슬라이드">
+            <canvas id="companyPdfCanvasBg" aria-hidden="true"></canvas>
             <canvas id="companyPdfCanvas"></canvas>
             <div id="pdfFallback" class="pdf-fallback">회사 소개 PDF를 불러올 수 없습니다.</div>
           </div>
@@ -555,6 +582,7 @@
     /* 회사 소개 PDF 자동 슬라이드 (페이지당 10초) */
     (function setupCompanyPdfSlideshow() {
       const canvas = document.getElementById('companyPdfCanvas');
+      const bgCanvas = document.getElementById('companyPdfCanvasBg');
       const fallback = document.getElementById('pdfFallback');
       if (!canvas || !window['pdfjsLib']) return;
 
@@ -565,6 +593,7 @@
       let isRendering = false;
 
       const ctx = canvas.getContext('2d');
+      const bgCtx = bgCanvas ? bgCanvas.getContext('2d') : null;
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
       function showFallback() {
@@ -581,26 +610,62 @@
           const viewport = page.getViewport({ scale: 1 });
           const scaleX = containerWidth / viewport.width;
           const scaleY = containerHeight / viewport.height;
-          const scale = Math.max(scaleX, scaleY); // cover
+          // 여백(레터박스)이 아까우면 contain에 약간의 줌을 더해 더 꽉 차게 만든다.
+          // 값이 커질수록 여백은 줄지만, 가장자리가 조금 잘릴 수 있다.
+          const FIT_ZOOM = 1.08;
+          const scaleContain = Math.min(scaleX, scaleY) * FIT_ZOOM;
+          const scaleCover = Math.max(scaleX, scaleY); // 배경 채움(여백 제거용)
 
-          const scaledViewport = page.getViewport({ scale });
-          // 캔버스가 CSS로 늘어나며 글자가 흐릿해지는 문제 방지:
-          // devicePixelRatio 만큼 더 높은 해상도로 렌더링한다.
-          const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-          canvas.width = Math.floor(scaledViewport.width * dpr);
-          canvas.height = Math.floor(scaledViewport.height * dpr);
-          canvas.style.width = `${Math.floor(scaledViewport.width)}px`;
-          canvas.style.height = `${Math.floor(scaledViewport.height)}px`;
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          // 전경(원본 전체): DPR을 더 올려 선명도 강화
+          // TV에서 작은 글씨가 흐릿하면 여기 상한을 올리면 개선된다(대신 렌더 비용 증가).
+          const fgViewport = page.getViewport({ scale: scaleContain });
+          const fgDpr = Math.max(1, Math.min(6, window.devicePixelRatio || 1));
+          canvas.width = Math.floor(fgViewport.width * fgDpr);
+          canvas.height = Math.floor(fgViewport.height * fgDpr);
+          canvas.style.width = `${Math.floor(fgViewport.width)}px`;
+          canvas.style.height = `${Math.floor(fgViewport.height)}px`;
+          ctx.setTransform(fgDpr, 0, 0, fgDpr, 0, 0);
+          // 축소 표시 시 품질 개선(브라우저 지원 범위 내)
+          try {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+          } catch {}
+
+          // 배경(cover + blur): 여백을 자연스럽게 채우기. 배경은 DPR 낮춰도 충분.
+          if (bgCanvas && bgCtx) {
+            const bgViewport = page.getViewport({ scale: scaleCover });
+            const bgDpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+            bgCanvas.width = Math.floor(bgViewport.width * bgDpr);
+            bgCanvas.height = Math.floor(bgViewport.height * bgDpr);
+            bgCanvas.style.width = `${Math.floor(bgViewport.width)}px`;
+            bgCanvas.style.height = `${Math.floor(bgViewport.height)}px`;
+            bgCtx.setTransform(bgDpr, 0, 0, bgDpr, 0, 0);
+            try {
+              bgCtx.imageSmoothingEnabled = true;
+              bgCtx.imageSmoothingQuality = 'high';
+            } catch {}
+          }
 
           const renderContext = {
             canvasContext: ctx,
-            viewport: scaledViewport,
+            viewport: fgViewport,
           };
-          const renderTask = page.render(renderContext);
-          renderTask.promise.then(function () {
-            isRendering = false;
-          });
+          const fgTask = page.render(renderContext);
+
+          let bgTask = null;
+          if (bgCanvas && bgCtx) {
+            const bgViewport = page.getViewport({ scale: scaleCover });
+            bgTask = page.render({ canvasContext: bgCtx, viewport: bgViewport });
+          }
+
+          Promise.all([fgTask.promise, bgTask ? bgTask.promise : Promise.resolve()])
+            .then(function () {
+              isRendering = false;
+            })
+            .catch(function () {
+              isRendering = false;
+              showFallback();
+            });
         }).catch(function () {
           isRendering = false;
           showFallback();
