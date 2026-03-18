@@ -328,7 +328,7 @@
     .bottom-col {
       min-height: 0;
       overflow: hidden;
-      padding: 0.8vh 1.0vw;
+      padding: 0.6vh 0.9vw 0.55vh;
       display: flex;
       flex-direction: column;
       gap: 0;
@@ -340,7 +340,7 @@
       overflow: hidden;
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr)); /* 스샷처럼 촘촘하게 */
-      gap: 0.7vh 0.8vw;
+      gap: 0.55vh 0.7vw;
       align-content: start;
     }
     .card {
@@ -348,17 +348,17 @@
       border: 1px solid rgba(15,23,42,0.10);
       border-radius: 14px;
       box-shadow: 0 10px 22px rgba(15,23,42,0.06);
-      padding: 0.55vh 0.65vw;
+      padding: 0.45vh 0.55vw;
       display: grid;
-      grid-template-rows: auto auto;
-      gap: 0.35vh;
+      grid-template-rows: auto auto auto;
+      gap: 0.25vh;
       min-width: 0;
     }
     .card .logo {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 3.2vh;
+      min-height: 2.8vh;
     }
     .card .logo img {
       height: clamp(20px, 3.4vh, 30px);
@@ -369,16 +369,17 @@
     }
     .card .line1 {
       text-align: center;
-      font-size: clamp(0.9rem, 1.55vh, 1.1rem);
+      font-size: clamp(0.9rem, 1.5vh, 1.08rem);
       font-weight: 1000;
-      line-height: 1.15;
+      line-height: 1.12;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: #0b1220;
     }
     .card .line2 {
       text-align: center;
-      font-size: clamp(0.85rem, 1.45vh, 1.05rem);
+      font-size: clamp(0.84rem, 1.4vh, 1.02rem);
       font-weight: 900;
       color: #0b1220;
       white-space: nowrap;
@@ -447,9 +448,8 @@
         ? `<div class="logo"><img src="${logoUrl}" alt="" onerror="this.parentElement.innerHTML=''"></div>`
         : `<div class="logo"></div>`;
 
-      const companyColor = m.color ? escapeHtml(m.color) : '';
-      const companyStyleAttr = companyColor ? ` style="color:${companyColor}"` : '';
-      const line1 = `<span${companyStyleAttr}>${escapeHtml(m.company)}</span> <span style="color:#0b1220">${escapeHtml(m.name)}</span>`;
+      const nameText = escapeHtml(m.name) + (m.suffix ? ' ' + escapeHtml(m.suffix) : '');
+      const line1 = `${nameText}`;
       const line2 = `${escapeHtml(m.phone)}`;
 
       return `<div class="card">
