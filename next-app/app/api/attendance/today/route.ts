@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function GET(_req: NextRequest) {
   try {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      console.warn('SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY 미설정 → 출근 목록 빈 배열 반환');
+      return NextResponse.json([]);
+    }
+
     const today = new Date().toISOString().slice(0, 10);
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('attendance')
       .select('*')
       .eq('date', today);

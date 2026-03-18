@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import managers from '@/data/managers.json';
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      console.warn('SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY 미설정');
+      return NextResponse.json({ error: 'supabase-not-configured' }, { status: 503 });
+    }
+
     const body = await req.json();
     const { managerId } = body;
     if (!managerId) {
@@ -31,7 +37,7 @@ export async function POST(req: NextRequest) {
       checkout_at: null as string | null,
     };
 
-    const { data, error } = await supabaseAdmin.from('attendance').insert(record).select('*').single();
+    const { data, error } = await supabase.from('attendance').insert(record).select('*').single();
     if (error) {
       console.error('supabase insert error', error);
       return NextResponse.json({ error: 'failed-to-checkin' }, { status: 500 });

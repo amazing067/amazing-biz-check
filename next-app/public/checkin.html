@@ -131,6 +131,16 @@
       });
     }
 
+    function showError(msg) {
+      const el = document.createElement('p');
+      el.className = 'empty';
+      el.style.color = '#c75c5c';
+      el.style.marginTop = '0.5rem';
+      el.textContent = msg;
+      listEl.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+
     function doCheckin(managerId) {
       const btn = listEl.querySelector(`.btn[data-manager-id="${managerId}"]`);
       if (btn) btn.disabled = true;
@@ -139,11 +149,24 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ managerId }),
       })
-        .then((r) => r.json())
-        .then(() => {
-          load();
+        .then((r) => {
+          return r.json().then((data) => ({ ok: r.ok, status: r.status, data }));
+        })
+        .then(({ ok, data }) => {
+          if (ok) {
+            load();
+          } else {
+            if (btn) btn.disabled = false;
+            if (data && data.error === 'supabase-not-configured') {
+              showError('출근 처리 불가: 서버에 DB 설정이 없습니다. .env.local을 확인해 주세요.');
+            } else {
+              showError('출근 처리에 실패했습니다. 다시 시도해 주세요.');
+            }
+          }
         })
         .catch(() => {
+          if (btn) btn.disabled = false;
+          showError('연결에 실패했습니다. 네트워크를 확인해 주세요.');
           load();
         });
     }
@@ -156,11 +179,24 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recordId }),
       })
-        .then((r) => r.json())
-        .then(() => {
-          load();
+        .then((r) => {
+          return r.json().then((data) => ({ ok: r.ok, data }));
+        })
+        .then(({ ok, data }) => {
+          if (ok) {
+            load();
+          } else {
+            if (btn) btn.disabled = false;
+            if (data && data.error === 'supabase-not-configured') {
+              showError('퇴근 처리 불가: 서버에 DB 설정이 없습니다.');
+            } else {
+              showError('퇴근 처리에 실패했습니다. 다시 시도해 주세요.');
+            }
+          }
         })
         .catch(() => {
+          if (btn) btn.disabled = false;
+          showError('연결에 실패했습니다.');
           load();
         });
     }

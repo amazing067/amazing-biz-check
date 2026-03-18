@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      return NextResponse.json({ error: 'supabase-not-configured' }, { status: 503 });
+    }
+
     const body = await req.json();
     const { recordId } = body;
     if (!recordId) {
@@ -11,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const nowIso = new Date().toISOString();
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('attendance')
       .update({ checkout_at: nowIso })
       .eq('id', recordId)
