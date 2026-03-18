@@ -1,0 +1,11 @@
+{
+  "name": "amazing-biz-check-root",
+  "private": true,
+  "scripts": {
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$line=(netstat -ano | findstr :2000 | Select-String LISTENING | Select-Object -First 1).Line; if ($line -and ($line -match '([0-9]+)\\s*$')) { $p=$Matches[1]; taskkill /PID $p /F | Out-Null }; npm --prefix next-app run dev\"",
+    "build": "npm --prefix next-app run build",
+    "start": "npm --prefix next-app run start",
+    "lint": "npm --prefix next-app run lint"
+  }
+}
+
