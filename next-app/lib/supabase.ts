@@ -14,10 +14,14 @@ function getSupabaseEnv(): { url: string; key: string } | null {
   _envCache = null
 
   const cwd = process.cwd()
-  const candidates = [
-    path.join(cwd, '.env.local'),
-    path.join(cwd, 'next-app', '.env.local'),
-  ]
+  // 프로젝트 루트 찾기: __dirname에서 위로 올라가며 package.json 또는 .env.local 있는 디렉터리
+  const dirsToTry: string[] = [cwd, path.join(cwd, 'next-app')]
+  let dir = __dirname
+  for (let i = 0; i < 10 && dir !== path.dirname(dir); i++) {
+    dirsToTry.push(dir)
+    dir = path.dirname(dir)
+  }
+  const candidates = dirsToTry.map((d) => path.join(d, '.env.local'))
   for (const file of candidates) {
     try {
       if (!fs.existsSync(file)) continue
