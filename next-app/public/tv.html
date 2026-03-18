@@ -584,8 +584,14 @@
           const scale = Math.max(scaleX, scaleY); // cover
 
           const scaledViewport = page.getViewport({ scale });
-          canvas.width = scaledViewport.width;
-          canvas.height = scaledViewport.height;
+          // 캔버스가 CSS로 늘어나며 글자가 흐릿해지는 문제 방지:
+          // devicePixelRatio 만큼 더 높은 해상도로 렌더링한다.
+          const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+          canvas.width = Math.floor(scaledViewport.width * dpr);
+          canvas.height = Math.floor(scaledViewport.height * dpr);
+          canvas.style.width = `${Math.floor(scaledViewport.width)}px`;
+          canvas.style.height = `${Math.floor(scaledViewport.height)}px`;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
           const renderContext = {
             canvasContext: ctx,
