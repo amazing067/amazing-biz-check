@@ -19,7 +19,7 @@
   { "id": "18", "company": "신한생명", "name": "배수영", "phone": "010-7931-8116", "logo": "신한라이프.png", "category": "생명보험", "color": "#0046ff" },
   { "id": "19", "company": "KB생명", "name": "한채원", "phone": "010-8988-8976", "logo": "KB라이프생명.png", "category": "생명보험", "color": "#FCAF16" },
   { "id": "20", "company": "DB생명", "name": "김세진", "suffix": "부지점장", "phone": "010-6560-0130", "logo": "DB생명.png", "category": "생명보험", "color": "#0080c6" },
-  { "id": "21", "company": "흥국생명", "name": "박관제", "phone": "010-4421-1510", "logo": "흥국생명.png", "category": "생명보험", "color": "#E91E8C" },
+  { "id": "21", "company": "흥국생명", "name": "김지영", "phone": "010-8128-8959", "logo": "흥국생명.png", "category": "생명보험", "color": "#E91E8C" },
   { "id": "22", "company": "동양생명", "name": "최서현", "phone": "010-3140-5713", "logo": "동양생명.png", "category": "생명보험", "color": "#e30613" },
   { "id": "23", "company": "교보생명", "name": "박미령", "phone": "010-5843-5123", "logo": "교보생명.png", "category": "생명보험", "color": "#00a650" },
   { "id": "24", "company": "메트라이프", "name": "박나영", "phone": "010-8962-3283", "logo": "메트라이프.png", "category": "생명보험", "color": "#0077c8" },
