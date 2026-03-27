@@ -58,6 +58,15 @@
     .card .btn.checkin:hover { background: #248f5f; }
     .card .btn.checkout { background: #c75c5c; color: #fff; }
     .card .btn.checkout:hover { background: #b35050; }
+    .card .btn.edit {
+      margin-top: 0.35rem;
+      background: #334155;
+      color: #fff;
+      font-size: 1rem;
+      padding: 0.65rem 1rem;
+      max-width: 140px;
+    }
+    .card .btn.edit:hover { background: #1f2937; }
     .card .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .empty { color: #5a6c7d; text-align: center; padding: 2rem; }
   </style>
@@ -70,6 +79,7 @@
   <script>
     const listEl = document.getElementById('list');
     // 상단 메시지 박스를 사용하지 않습니다.
+    let managersCache = [];
 
     function escapeHtml(s) {
       const div = document.createElement('div');
@@ -100,11 +110,13 @@
           </div>
           <div class="card-foot">
             <button type="button" class="btn ${btnClass}" ${dataAttr}>${btnText}</button>
+            <button type="button" class="btn edit" data-edit-manager-id="${m.id}">변경</button>
           </div>
         </div>`;
     }
 
     function render(managers, attendance) {
+      managersCache = Array.isArray(managers) ? managers : [];
       const present = attendance.filter((r) => !r.checkoutAt);
       if (!managers.length) {
         listEl.innerHTML = '<p class="empty">등록된 매니저가 없습니다.</p>';
@@ -129,6 +141,16 @@
       listEl.querySelectorAll('.btn.checkout').forEach((b) => {
         b.addEventListener('click', () => doCheckout(b.dataset.recordId));
       });
+      listEl.querySelectorAll('.btn.edit').forEach((b) => {
+        b.addEventListener('click', () => doEditManager(b.dataset.editManagerId));
+      });
+    }
+
+    function normalizePhone(raw) {
+      const digits = String(raw || '').replace(/\D/g, '');
+      if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+      if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+      return String(raw || '').trim();
     }
 
     function showError(msg) {
@@ -198,6 +220,59 @@
           if (btn) btn.disabled = false;
           showError('연결에 실패했습니다.');
           load();
+        });
+    }
+
+    function doEditManager(managerId) {
+      const manager = (managersCache || []).find((m) => String(m.id) === String(managerId));
+      if (!manager) {
+        showError('변경할 매니저 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      const currentName = manager.name || '';
+      const currentPhone = manager.phone || '';
+
+      const nextName = window.prompt('변경할 이름을 입력해 주세요.', currentName);
+      if (nextName === null) return;
+      const trimmedName = nextName.trim();
+      if (!trimmedName) {
+        showError('이름은 비워둘 수 없습니다.');
+        return;
+      }
+
+      const nextPhone = window.prompt('변경할 전화번호를 입력해 주세요.', currentPhone);
+      if (nextPhone === null) return;
+      const normalizedPhone = normalizePhone(nextPhone);
+      if (!normalizedPhone) {
+        showError('전화번호는 비워둘 수 없습니다.');
+        return;
+      }
+
+      const btn = listEl.querySelector(`.btn.edit[data-edit-manager-id="${managerId}"]`);
+      if (btn) btn.disabled = true;
+
+      fetch('/api/managers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          managerId,
+          name: trimmedName,
+          phone: normalizedPhone,
+        }),
+      })
+        .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
+        .then(({ ok }) => {
+          if (ok) {
+            load();
+          } else {
+            if (btn) btn.disabled = false;
+            showError('매니저 정보 변경에 실패했습니다. 다시 시도해 주세요.');
+          }
+        })
+        .catch(() => {
+          if (btn) btn.disabled = false;
+          showError('연결에 실패했습니다.');
         });
     }
 

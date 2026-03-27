@@ -11,7 +11,7 @@
   { "id": "10", "company": "한화손해보험", "name": "허광범", "phone": "010-3864-0622", "logo": "한화손해보험.png", "category": "손해보험", "color": "#f37321" },
   { "id": "11", "company": "하나손해보험", "name": "김명신", "phone": "010-3685-6377", "logo": "하나손해보험.png", "category": "손해보험", "color": "#009591" },
   { "id": "12", "company": "AIG손해보험", "name": "이영민", "phone": "010-8191-0258", "logo": "AIG손해보험.png", "category": "손해보험", "color": "#000066" },
-  { "id": "13", "company": "라이나손해보험", "name": "박이슬", "phone": "010-2829-7487", "logo": "라이나손해보험.png", "category": "손해보험", "color": "#0066b3" },
+  { "id": "13", "company": "라이나손해보험", "name": "최형미", "phone": "010-8671-4240", "logo": "라이나손해보험.png", "category": "손해보험", "color": "#0066b3" },
   { "id": "14", "company": "미래에셋", "name": "전혜진", "phone": "010-9814-9404", "logo": "미래에셋생명.png", "category": "생명보험", "color": "#043B72" },
   { "id": "15", "company": "한화생명", "name": "김원숙", "phone": "010-5093-9635", "logo": "한화생명.png", "category": "생명보험", "color": "#f37321" },
   { "id": "16", "company": "ABL생명", "name": "하수정", "phone": "010-8442-9343", "logo": "ABL생명.png", "category": "생명보험", "color": "#c41e3a" },

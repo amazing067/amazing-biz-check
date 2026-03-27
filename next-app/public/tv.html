@@ -133,7 +133,9 @@
     .present-row > * { position: relative; z-index: 1; }
     .present-list.two-col .present-row {
       width: min(98%, 420px);
-      grid-template-columns: 34% 66%;
+      grid-template-columns: 1fr;
+      padding: 0.95vh 0.9vw;
+      min-height: 11.2vh; /* 6명 이상일 때 카드 행 높이를 키워 가독성 확보 */
     }
     .present-row .logo {
       display: flex;
@@ -189,12 +191,24 @@
       justify-self: end;
     }
     .present-list.two-col .present-row .meta {
-      padding-right: 0.4vw;
-      gap: 0.25vh 0.8vw;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+      padding-right: 0;
+      gap: 0.22vh 0;
+      justify-items: center;
+      align-items: center;
+      text-align: center;
     }
     .present-list.two-col .present-row .phone {
-      font-size: clamp(1.1rem, 2.35vh, 1.6rem);
-      letter-spacing: -0.01em;
+      font-size: clamp(1.08rem, 2.2vh, 1.5rem);
+      letter-spacing: -0.005em;
+      justify-self: center;
+    }
+    .present-list.two-col .present-row .name {
+      font-size: clamp(1.12rem, 2.3vh, 1.6rem);
+    }
+    .present-list.two-col .present-row .logo {
+      display: none;
     }
 
     /* 우측: 육하 보드 */
