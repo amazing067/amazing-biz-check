@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import managers from '@/data/managers.json';
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,7 +15,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'managerId-required' }, { status: 400 });
     }
 
-    const manager = (managers as any[]).find((m) => String(m.id) === String(managerId));
+    const { data: manager, error: managerError } = await supabase
+      .from('managers')
+      .select('*')
+      .eq('id', String(managerId))
+      .single();
+
+    if (managerError) {
+      if (managerError.code === 'PGRST116') {
+        return NextResponse.json({ error: 'manager-not-found' }, { status: 404 });
+      }
+      console.error('supabase manager select error', managerError);
+      return NextResponse.json({ error: 'failed-to-load-manager' }, { status: 500 });
+    }
+
     if (!manager) {
       return NextResponse.json({ error: 'manager-not-found' }, { status: 404 });
     }
