@@ -1,6 +1,32 @@
+ "use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+  const NOTICE_PASSWORD = "amazing1234";
+
+  function verifyPassword() {
+    const input = window.prompt("비밀번호를 입력하세요.");
+    if (input === null) return false;
+    if (input.trim() !== NOTICE_PASSWORD) {
+      window.alert("비밀번호가 올바르지 않습니다.");
+      return false;
+    }
+    return true;
+  }
+
+  function handleNoticeAdminClick() {
+    if (!verifyPassword()) return;
+    router.push("/notice-admin.html");
+  }
+
+  function handleCheckinClick() {
+    if (!verifyPassword()) return;
+    router.push("/checkin.html");
+  }
+
   return (
     <div className="landing-root">
       <div className="landing-brand">
@@ -22,12 +48,12 @@ export default function Home() {
         <Link href="/tv-public.html" className="landing-button">
           📺 TV 대시보드 (공용)
         </Link>
-        <Link href="/checkin.html" className="landing-button">
+        <button type="button" className="landing-button" onClick={handleCheckinClick}>
           ✅ 출근 / 퇴근 체크 (태블릿)
-        </Link>
-        <Link href="/notice-admin.html" className="landing-button">
+        </button>
+        <button type="button" className="landing-button" onClick={handleNoticeAdminClick}>
           📝 공지사항 수정 (광진2/공용)
-        </Link>
+        </button>
       </div>
     </div>
   );

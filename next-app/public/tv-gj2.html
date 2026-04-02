@@ -767,11 +767,12 @@
 
     function renderPresent() {
       const present = presentCache || [];
+      // 공지는 출근 인원과 무관하게 항상 표시
+      noticeEl.style.display = 'flex';
       if (!present.length) {
       presentBigEl.innerHTML = '';
       presentSmallEl.innerHTML = '';
         presentEmptyEl.style.display = 'block';
-        noticeEl.style.display = 'none';
       presentBigEl.className = 'present-list big';
       presentSmallEl.className = 'present-list small';
         return;
@@ -779,7 +780,6 @@
 
       presentEmptyEl.style.display = 'none';
       // 5명까지만 한 화면에 크게, 바로 아래 공지사항
-      noticeEl.style.display = 'flex';
 
       if (present.length <= PRESENT_BIG_MAX) {
         const bigCards = present.slice(0, PRESENT_BIG_MAX);

@@ -77,6 +77,19 @@
   <div id="list" class="list"></div>
 
   <script>
+    (function checkPasswordGate() {
+      const PASSWORD = 'amazing1234';
+      const KEY = 'checkin-auth-ok';
+      if (sessionStorage.getItem(KEY) === '1') return;
+      const input = window.prompt('출근/퇴근 체크 비밀번호를 입력하세요.');
+      if (input === null || input.trim() !== PASSWORD) {
+        alert('비밀번호가 올바르지 않습니다.');
+        window.location.href = '/';
+        return;
+      }
+      sessionStorage.setItem(KEY, '1');
+    })();
+
     const listEl = document.getElementById('list');
     // 상단 메시지 박스를 사용하지 않습니다.
     let managersCache = [];
