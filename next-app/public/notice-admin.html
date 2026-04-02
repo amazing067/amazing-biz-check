@@ -313,6 +313,19 @@
   </div>
 
   <script>
+    (function checkPasswordGate() {
+      const PASSWORD = 'amazing1234';
+      const KEY = 'notice-admin-auth-ok';
+      if (sessionStorage.getItem(KEY) === '1') return;
+      const input = window.prompt('공지사항 수정 비밀번호를 입력하세요.');
+      if (input === null || input.trim() !== PASSWORD) {
+        alert('비밀번호가 올바르지 않습니다.');
+        window.location.href = '/';
+        return;
+      }
+      sessionStorage.setItem(KEY, '1');
+    })();
+
     const gj2Editor = document.getElementById('gj2Editor');
     const publicEditor = document.getElementById('publicEditor');
     const gj2Preview = document.getElementById('gj2Preview');

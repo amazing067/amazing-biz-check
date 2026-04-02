@@ -7,23 +7,26 @@ export default function Home() {
   const router = useRouter();
   const NOTICE_PASSWORD = "amazing1234";
 
-  function verifyPassword() {
+  function verifyPassword(sessionKey?: string) {
     const input = window.prompt("비밀번호를 입력하세요.");
     if (input === null) return false;
     if (input.trim() !== NOTICE_PASSWORD) {
       window.alert("비밀번호가 올바르지 않습니다.");
       return false;
     }
+    if (sessionKey) {
+      sessionStorage.setItem(sessionKey, "1");
+    }
     return true;
   }
 
   function handleNoticeAdminClick() {
-    if (!verifyPassword()) return;
+    if (!verifyPassword("notice-admin-auth-ok")) return;
     router.push("/notice-admin.html");
   }
 
   function handleCheckinClick() {
-    if (!verifyPassword()) return;
+    if (!verifyPassword("checkin-auth-ok")) return;
     router.push("/checkin.html");
   }
 
