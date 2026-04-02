@@ -17,7 +17,7 @@
     .gj2-layout {
       height: 100vh;
       display: grid;
-      grid-template-columns: 44% 56%;
+      grid-template-columns: 47% 53%;
       gap: 0;
     }
 
@@ -139,8 +139,9 @@
     .notice-top {
       color: #2563eb; /* 파란색 */
       font-weight: 1000;
-      font-size: clamp(1.75rem, 3.45vh, 2.4rem);
+      font-size: clamp(1.62rem, 3.18vh, 2.18rem); /* 한 글자 줄바꿈 방지용 미세 축소 */
       line-height: 1.15;
+      white-space: nowrap;
       text-shadow: 0 8px 18px rgba(37,99,235,0.12);
     }
 
@@ -306,11 +307,38 @@
     .present-list.phonecards .mgr-name {
       font-size: clamp(0.95rem, 2.0vh, 1.32rem);
       line-height: 1.1;
+      position: relative;
+      color: #0b1220;
     }
 
     .present-list.phonecards .mgr-phone {
       font-size: clamp(1.02rem, 2.3vh, 1.60rem);
       text-shadow: none;
+      position: relative;
+      color: #0b1220;
+    }
+
+    /* 6명 이상 카드도 이름/전화에 동일한 그라데이션 애니메이션 적용 */
+    .present-list.phonecards .mgr-name::before,
+    .present-list.phonecards .mgr-phone::before {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: block;
+      pointer-events: none;
+      font: inherit;
+      line-height: inherit;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: linear-gradient(90deg, #7c3aed 0%, #ec4899 45%, #06b6d4 100%);
+      background-size: 220% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: nameGradientShift 2.8s ease-in-out infinite;
     }
 
     .present-row {
@@ -406,7 +434,8 @@
     /* 6명 이하(큰 배지): 로고/회사 표시 + 가운데 정렬 + 크게 */
     .present-list.big .present-row {
       grid-template-columns: 36% 64%;
-      width: min(96%, 720px);
+      width: 100%;      /* 공지사항 박스와 끝라인 맞춤 */
+      max-width: none;  /* 기존 max 제한 제거 */
       min-height: 12vh;
       padding: 1.0vh 1.0vw;
     }
@@ -682,6 +711,7 @@
     const presentEmptyEl = document.getElementById('gj2PresentEmpty');
     const noticeEl = document.getElementById('gj2Notice');
     const phoneBookEl = document.getElementById('phoneBook');
+    const defaultGj2NoticeHtml = noticeEl ? noticeEl.innerHTML : '';
 
     let managersCache = [];
     let presentCache = [];
@@ -730,8 +760,8 @@
 
       return `<div class="mgr-card present-mgr-card">
         ${logoHtml}
-        <div class="mgr-name">${name}${suffix}</div>
-        <div class="mgr-phone">${phone}</div>
+        <div class="mgr-name" data-text="${name}${suffix}">${name}${suffix}</div>
+        <div class="mgr-phone" data-text="${phone}">${phone}</div>
       </div>`;
     }
 
@@ -814,13 +844,18 @@
     }
 
     async function loadAll() {
-      const [managers, records] = await Promise.all([
+      const [managers, records, notices] = await Promise.all([
         fetch('/api/managers').then((r) => r.json()),
         fetch('/api/attendance/today').then((r) => r.json()),
+        fetch('/api/notices').then((r) => r.json()).catch(() => ({})),
       ]);
 
       managersCache = Array.isArray(managers) ? managers : [];
       presentCache = (Array.isArray(records) ? records : []).filter((r) => !r.checkoutAt);
+      if (noticeEl) {
+        const next = String(notices?.gj2NoticeHtml || '').trim();
+        noticeEl.innerHTML = next || defaultGj2NoticeHtml;
+      }
 
       renderPresent();
       renderPhoneBook();

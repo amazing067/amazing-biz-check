@@ -25,6 +25,9 @@ export default function Home() {
         <Link href="/checkin.html" className="landing-button">
           ✅ 출근 / 퇴근 체크 (태블릿)
         </Link>
+        <Link href="/notice-admin.html" className="landing-button">
+          📝 공지사항 수정 (광진2/공용)
+        </Link>
       </div>
     </div>
   );

@@ -17,60 +17,126 @@
     .public-layout {
       height: 100vh;
       display: grid;
-      grid-template-columns: 42% 58%;
+      grid-template-columns: 33% 67%;
+      position: relative;
       gap: 0;
     }
 
     .kb-panel {
-      padding: 1.0vh 1.0vw 1.0vh;
+      padding: 0;
       background: #f7fafc;
       border-right: 2px solid rgba(15, 23, 42, 0.12);
       display: flex;
       flex-direction: column;
-      gap: 0.9vh;
+      gap: 0;
       min-height: 0;
     }
 
     .kb-box {
-      flex: 1;
+      /* TV에서도 양쪽 여백이 덜 남도록: 박스 높이를 패널에 맞춤 */
+      flex: 1 1 auto;
       min-height: 0;
-      border-radius: 16px;
+      border-radius: 0;
       overflow: hidden;
-      background: rgba(255,255,255,0.7);
-      border: 2px solid rgba(124, 58, 237, 0.18);
-      box-shadow: 0 10px 24px rgba(15,23,42,0.08);
+      background: #ffffff;
+      border: 0;
+      box-shadow: none;
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+    }
+
+    /* 왼쪽 제안서 하단 구분선: 남색 + 라운드 끝 */
+    .kb-box::after {
+      content: '';
+      position: absolute;
+      left: 0.35vw;
+      right: 0.35vw;
+      bottom: 0;
+      height: 3px;
+      background: #1e3a8a;
+      border-radius: 999px;
+      pointer-events: none;
     }
 
     .kb-box img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: contain; /* 잘림 방지: 이미지 전체 표시 */
+      object-position: top center;
+      transform: scale(1.08); /* 공백 축소 + 내용 가독성 확대 */
+      transform-origin: top center;
       display: block;
       background: transparent;
+      max-height: 100%;
     }
 
     .notice {
-      flex: 0 0 12vh;
+      /* 좌측 패널 하단 공지(원래 구조) */
+      flex: 0 0 auto;
       min-height: 0;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.75);
-      border: 2px solid rgba(255, 59, 212, 0.18);
-      box-shadow: 0 10px 24px rgba(15,23,42,0.06);
-      padding: 0.8vh 0.9vw;
+      border-radius: 10px 10px 0 0; /* 끝부분 살짝 라운드 */
+      background: #f3f1f8; /* 불투명 배경으로 좌/우 경계선 비침 방지 */
+      border: 0;
+      box-shadow: none;
+      padding: 0.7vh 0.4vw;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
       font-weight: 900;
       color: #111827;
-      font-size: clamp(0.95rem, 1.8vh, 1.35rem);
+      font-size: clamp(1.9rem, 3.8vh, 2.6rem); /* 공지 기본 글씨 2배 */
+      line-height: 1.35;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .notice-text {
+      width: 100%;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .notice-top {
+      color: #2563eb;
+      font-weight: 1000;
+      font-size: clamp(2.04rem, 4.1vh, 2.9rem); /* 2배 */
+      line-height: 1.18;
+    }
+
+    .notice-yn {
+      color: #ef4444;
+      font-weight: 1000;
+    }
+
+    .notice-strong {
+      color: #ef4444;
+      font-weight: 1000;
+      font-size: clamp(2.0rem, 3.9vh, 2.76rem); /* 2배 */
+    }
+
+    .notice-sub {
+      color: #111827;
+      font-weight: 900;
+      font-size: clamp(1.64rem, 3.1vh, 2.04rem); /* 2배 */
+    }
+
+    /* 공지사항을 레이아웃 전체 폭으로 오버레이 배치(위치는 JS에서 PDF 하단 기준으로 동기화) */
+    .public-layout > .notice {
+      position: absolute;
+      left: 0.35vw;
+      right: 0.35vw;
+      bottom: 0;
+      z-index: 3;
+      border-top: 3px solid #1e3a8a; /* 남색 구분선 */
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.42);
     }
 
     .pdf-panel {
-      padding: 1.0vh 1.0vw 1.0vh;
+      /* PDF 체감 크기는 유지하고 주변 여백만 더 압축 */
+      padding: 0.12vh 0.18vw 0.12vh;
       min-height: 0;
       overflow: hidden;
       background:
@@ -87,13 +153,14 @@
       position: relative;
       flex: 1;
       min-height: 0;
-      border-radius: 16px;
+      border-radius: 8px;
       overflow: hidden;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.14);
-      box-shadow: 0 14px 34px rgba(0,0,0,0.25);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.14);
       display: flex;
-      align-items: center;
+      /* 캔버스가 세로로 가운데 떠서 위/아래 여백이 생기므로, 위로 붙임 */
+      align-items: flex-start;
       justify-content: center;
     }
 
@@ -152,7 +219,6 @@
       <div class="kb-box">
         <img id="kbImage" src="/docs/kb-signup.png" alt="KB 가입제안서" onerror="this.style.display='none'">
       </div>
-      <div id="publicNotice" class="notice">공지사항: 여기에 내용을 표시합니다.</div>
     </section>
 
     <section class="pdf-panel" aria-label="월간 프라임 PDF (23~31p 반복)">
@@ -162,20 +228,28 @@
         <div id="pdfFallback" class="pdf-fallback">월간 프라임 PDF를 불러올 수 없습니다.</div>
       </div>
     </section>
+    <div id="publicNotice" class="notice">
+      <div class="notice-text">
+        <div class="notice-top">4월부터 전체보험사 모니터링이 변경되었습니다</div>
+        <div>질문 복잡해지고 <span class="notice-yn">예/아니오</span> 섞여서 나오니</div>
+        <div>끝까지 확인 한 후 답변해주세요!!</div>
+        <div class="notice-strong">청약 후 3시간 후에만 해피콜 진행가능</div>
+        <div class="notice-sub">(3시간 전에는 해피콜 진행이 불가능합니다)</div>
+      </div>
+    </div>
+
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
-    // 공지사항: 여기 텍스트만 바꾸면 끝
-    const PUBLIC_NOTICE_TEXT = '공지사항: 월간 프라임/업무 안내를 확인해 주세요.';
-
     const noticeEl = document.getElementById('publicNotice');
-    if (noticeEl) noticeEl.textContent = PUBLIC_NOTICE_TEXT;
+    const defaultPublicNoticeHtml = noticeEl ? noticeEl.innerHTML : '';
 
     (function setupCompanyPdfSlideshow() {
       const canvas = document.getElementById('companyPdfCanvas');
       const bgCanvas = document.getElementById('companyPdfCanvasBg');
       const fallback = document.getElementById('pdfFallback');
+      const notice = document.getElementById('publicNotice');
       if (!canvas || !bgCanvas || !window['pdfjsLib']) return;
 
       const url = '/docs/company-intro.pdf';
@@ -197,6 +271,50 @@
         if (fallback) fallback.style.display = 'flex';
       }
 
+      function syncNoticeUnderPdf() {
+        if (!notice) return;
+        const panel = document.querySelector('.pdf-panel');
+        const layout = document.querySelector('.public-layout');
+        const kbPanel = document.querySelector('.kb-panel');
+        if (!panel) return;
+        if (!layout) return;
+
+        const panelRect = panel.getBoundingClientRect();
+        const layoutRect = layout.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        const padBottom = 2; // 공지와 PDF 사이 최소 간격
+        const minNoticeHeight = 64; // 너무 작아지지 않도록
+
+        const rawTop = (canvasRect.bottom - layoutRect.top) + padBottom;
+        const maxTop = layoutRect.height - minNoticeHeight;
+        const top = Math.max(0, Math.min(rawTop, maxTop));
+        const height = Math.max(minNoticeHeight, layoutRect.height - top);
+
+        notice.style.top = `${Math.floor(top)}px`;
+        notice.style.height = `${Math.floor(height)}px`;
+
+        // 왼쪽 가입제안서 영역도 공지 시작선(top)까지만 보이게 맞춤
+        if (kbPanel) {
+          kbPanel.style.height = `${Math.floor(top)}px`;
+          kbPanel.style.minHeight = `${Math.floor(top)}px`;
+          kbPanel.style.maxHeight = `${Math.floor(top)}px`;
+        }
+      }
+
+      async function loadPublicNotice() {
+        if (!noticeEl) return;
+        try {
+          const res = await fetch('/api/notices');
+          const data = await res.json();
+          const html = String(data?.publicNoticeHtml || '').trim();
+          noticeEl.innerHTML = html || defaultPublicNoticeHtml;
+          syncNoticeUnderPdf();
+        } catch (_) {
+          noticeEl.innerHTML = defaultPublicNoticeHtml;
+          syncNoticeUnderPdf();
+        }
+      }
+
       function renderPage(num) {
         if (!pdfDoc) return;
         isRendering = true;
@@ -213,6 +331,7 @@
           const scaleContain = Math.min(scaleX, scaleY) * FIT_ZOOM;
           const scaleCover = Math.max(scaleX, scaleY);
 
+          // 잘림 없이 크게: contain 기반으로 렌더
           const fgViewport = page.getViewport({ scale: scaleContain });
           const fgDpr = Math.max(1, Math.min(6, window.devicePixelRatio || 1));
           canvas.width = Math.floor(fgViewport.width * fgDpr);
@@ -244,6 +363,7 @@
 
           Promise.all([fgTask.promise, bgTask.promise]).then(function () {
             isRendering = false;
+            syncNoticeUnderPdf();
           }).catch(function () {
             isRendering = false;
             showFallback();
@@ -267,10 +387,20 @@
             currentPage = currentPage >= endPageSafe ? startPage : currentPage + 1;
             renderPage(currentPage);
           }, displayMs);
+
+          window.addEventListener('resize', function () {
+            syncNoticeUnderPdf();
+          });
+
+          setInterval(function () {
+            loadPublicNotice().catch(function () {});
+          }, 10000);
         })
         .catch(function () {
           showFallback();
         });
+
+      loadPublicNotice().catch(function () {});
     })();
   </script>
 </body>

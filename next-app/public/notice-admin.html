@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>공지사항 수정</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: linear-gradient(180deg, #d4ebf7 0%, #e8f4e8 50%, #f0f7e8 100%);
+      color: #10243a;
+      padding: 1rem;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 1rem;
+    }
+    h1 {
+      margin: 0.2rem 0 0.4rem;
+      text-align: center;
+      font-size: 2rem;
+      color: #143c5d;
+    }
+    .hint {
+      margin: 0;
+      text-align: center;
+      color: #334155;
+      font-weight: 700;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .panel {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(15,23,42,0.12);
+      border-radius: 14px;
+      padding: 0.9rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      display: grid;
+      gap: 0.55rem;
+    }
+    .title {
+      margin: 0;
+      font-size: 1.25rem;
+      color: #0f4f66;
+      font-weight: 900;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      padding: 0.5rem;
+      border: 1px solid rgba(15,23,42,0.14);
+      border-radius: 10px;
+      background: #f8fbff;
+    }
+    .toolbar label {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #334155;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .toolbar select,
+    .toolbar input[type="color"],
+    .toolbar input[type="number"] {
+      border: 1px solid rgba(15,23,42,0.2);
+      border-radius: 8px;
+      padding: 0.25rem 0.4rem;
+      background: #fff;
+      font-weight: 700;
+    }
+    .toolbar input[type="number"] {
+      width: 82px;
+    }
+    .tool-btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 0.45rem 0.65rem;
+      font-weight: 900;
+      color: #fff;
+      background: #334155;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .tool-btn:hover { background: #1f2937; }
+    .tool-btn.secondary {
+      background: #0f766e;
+    }
+    .tool-btn.secondary:hover {
+      background: #0d665f;
+    }
+    .editor {
+      width: 100%;
+      min-height: 320px;
+      border-radius: 10px;
+      border: 1px solid rgba(15,23,42,0.2);
+      padding: 0.7rem;
+      font-size: 1.05rem;
+      line-height: 1.5;
+      font-weight: 900;
+      text-align: center;
+      color: #111827;
+      background: #fff;
+      overflow: auto;
+      white-space: normal;
+    }
+    .editor:focus {
+      outline: 2px solid rgba(15, 118, 110, 0.28);
+      border-color: rgba(15, 118, 110, 0.38);
+    }
+    .preview-wrap {
+      border: 1px solid rgba(15,23,42,0.16);
+      border-radius: 12px;
+      background: #eef2f7;
+      padding: 0.55rem;
+      display: grid;
+      gap: 0.45rem;
+    }
+    .preview-title {
+      margin: 0;
+      font-size: 0.92rem;
+      font-weight: 900;
+      color: #334155;
+    }
+    .tv-notice-preview {
+      border-radius: 12px;
+      background: rgba(255,255,255,0.68);
+      border: 2px solid rgba(124, 58, 237, 0.25);
+      color: #111827;
+      font-weight: 900;
+      text-align: center;
+      padding: 0.55rem 0.7rem;
+      position: relative;
+      overflow: hidden;
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tv-notice-preview::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(90% 80% at 15% 0%, rgba(124, 58, 237, 0.18), transparent 55%),
+        radial-gradient(90% 80% at 90% 20%, rgba(6, 182, 212, 0.14), transparent 55%),
+        repeating-linear-gradient(45deg, rgba(124, 58, 237, 0.035) 0px, rgba(124, 58, 237, 0.035) 1px, transparent 1px, transparent 10px);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    .tv-notice-preview > * { position: relative; z-index: 1; }
+    .tv-notice-preview .notice-text {
+      width: 100%;
+      text-align: center;
+      line-height: 1.5;
+      font-size: 1.05rem;
+    }
+    .editor .notice-text {
+      width: 100%;
+      text-align: center;
+      line-height: 1.5;
+      font-size: 1.05rem;
+    }
+    .tv-notice-preview .notice-top {
+      color: #2563eb;
+      font-weight: 1000;
+      font-size: 1.22rem;
+      line-height: 1.15;
+      text-shadow: 0 8px 18px rgba(37,99,235,0.12);
+      white-space: nowrap;
+    }
+    .editor .notice-top {
+      color: #2563eb;
+      font-weight: 1000;
+      font-size: 1.22rem;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+    .tv-notice-preview .notice-yn {
+      color: #ef4444;
+      font-weight: 1000;
+    }
+    .editor .notice-yn {
+      color: #ef4444;
+      font-weight: 1000;
+    }
+    .tv-notice-preview .notice-strong {
+      color: #ef4444;
+      font-weight: 1000;
+      font-size: 1.18rem;
+      text-shadow: 0 10px 24px rgba(239, 68, 68, 0.15);
+    }
+    .editor .notice-strong {
+      color: #ef4444;
+      font-weight: 1000;
+      font-size: 1.18rem;
+    }
+    .tv-notice-preview .notice-sub {
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #111827;
+    }
+    .editor .notice-sub {
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #111827;
+    }
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      font-size: 1.02rem;
+      font-weight: 900;
+      color: #fff;
+      background: #0f766e;
+      cursor: pointer;
+    }
+    .btn:disabled { opacity: 0.65; cursor: not-allowed; }
+    .status {
+      min-height: 1.3rem;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #334155;
+    }
+    .ok { color: #166534; }
+    .err { color: #b91c1c; }
+    @media (max-width: 960px) {
+      .grid { grid-template-columns: 1fr; }
+      .editor { min-height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>공지사항 수정</h1>
+    <p class="hint">HTML 형식으로 저장됩니다. 저장 후 TV 화면 새로고침(또는 10초 내 자동 반영)됩니다.</p>
+    <div class="grid">
+      <section class="panel">
+        <h2 class="title">광진2지점 공지</h2>
+        <div class="toolbar" data-editor-id="gj2Editor">
+          <label>색상 <input type="color" class="tool-color" value="#111827"></label>
+          <label>크기(px)
+            <input type="number" class="tool-size-px" min="8" max="120" step="1" value="32">
+          </label>
+          <label>줄간격
+            <select class="tool-line-height">
+              <option value="1.1">1.1</option>
+              <option value="1.2">1.2</option>
+              <option value="1.3" selected>1.3</option>
+              <option value="1.4">1.4</option>
+              <option value="1.5">1.5</option>
+              <option value="1.6">1.6</option>
+            </select>
+          </label>
+          <button type="button" class="tool-btn tool-bold">굵게</button>
+          <button type="button" class="tool-btn tool-underline">밑줄</button>
+          <button type="button" class="tool-btn tool-left">왼쪽</button>
+          <button type="button" class="tool-btn tool-center">가운데</button>
+          <button type="button" class="tool-btn tool-right">오른쪽</button>
+          <button type="button" class="tool-btn tool-clear">강조해제</button>
+        </div>
+        <div id="gj2Editor" class="editor" contenteditable="true"></div>
+        <div class="preview-wrap">
+          <p class="preview-title">광진2지점 공지 미리보기</p>
+          <div id="gj2Preview" class="tv-notice-preview"></div>
+        </div>
+        <button class="btn" id="gj2SaveBtn" type="button">광진2지점 공지 저장</button>
+      </section>
+      <section class="panel">
+        <h2 class="title">공용 공지</h2>
+        <div class="toolbar" data-editor-id="publicEditor">
+          <label>색상 <input type="color" class="tool-color" value="#111827"></label>
+          <label>크기(px)
+            <input type="number" class="tool-size-px" min="8" max="120" step="1" value="32">
+          </label>
+          <label>줄간격
+            <select class="tool-line-height">
+              <option value="1.1">1.1</option>
+              <option value="1.2">1.2</option>
+              <option value="1.3" selected>1.3</option>
+              <option value="1.4">1.4</option>
+              <option value="1.5">1.5</option>
+              <option value="1.6">1.6</option>
+            </select>
+          </label>
+          <button type="button" class="tool-btn tool-bold">굵게</button>
+          <button type="button" class="tool-btn tool-underline">밑줄</button>
+          <button type="button" class="tool-btn tool-left">왼쪽</button>
+          <button type="button" class="tool-btn tool-center">가운데</button>
+          <button type="button" class="tool-btn tool-right">오른쪽</button>
+          <button type="button" class="tool-btn tool-clear">강조해제</button>
+        </div>
+        <div id="publicEditor" class="editor" contenteditable="true"></div>
+        <div class="preview-wrap">
+          <p class="preview-title">공용 공지 미리보기</p>
+          <div id="publicPreview" class="tv-notice-preview"></div>
+        </div>
+        <button class="btn" id="publicSaveBtn" type="button">공용 공지 저장</button>
+      </section>
+    </div>
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    const gj2Editor = document.getElementById('gj2Editor');
+    const publicEditor = document.getElementById('publicEditor');
+    const gj2Preview = document.getElementById('gj2Preview');
+    const publicPreview = document.getElementById('publicPreview');
+    const gj2SaveBtn = document.getElementById('gj2SaveBtn');
+    const publicSaveBtn = document.getElementById('publicSaveBtn');
+    const statusEl = document.getElementById('status');
+
+    function setStatus(msg, kind) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status ' + (kind || '');
+    }
+
+    function syncPreview(editor, preview) {
+      if (!editor || !preview) return;
+      preview.innerHTML = editor.innerHTML || '';
+    }
+
+    function getRangeInEditor(editor) {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return null;
+      const range = sel.getRangeAt(0);
+      if (!editor.contains(range.commonAncestorContainer)) return null;
+      return range;
+    }
+
+    function applyInlineStyle(editor, styleText) {
+      const range = getRangeInEditor(editor);
+      if (!range || range.collapsed) return;
+      const span = document.createElement('span');
+      span.style.cssText = styleText;
+      const frag = range.extractContents();
+      span.appendChild(frag);
+      range.insertNode(span);
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(span);
+        sel.addRange(newRange);
+      }
+    }
+
+    function applyStyleToSelectionOrCursor(editor, styleProp, styleValue) {
+      const range = getRangeInEditor(editor);
+      if (!range) return;
+      if (!range.collapsed) {
+        applyInlineStyle(editor, `${styleProp}:${styleValue};`);
+        return;
+      }
+      let node = range.startContainer;
+      if (node.nodeType === 3) node = node.parentNode;
+      while (node && node !== editor) {
+        if (node.nodeType === 1) {
+          node.style[styleProp] = styleValue;
+          return;
+        }
+        node = node.parentNode;
+      }
+      editor.style[styleProp] = styleValue;
+    }
+
+    function applyCenterAlign(editor) {
+      const range = getRangeInEditor(editor);
+      if (!range) return;
+      let node = range.startContainer;
+      if (node.nodeType === 3) node = node.parentNode;
+      while (node && node !== editor) {
+        if (node.nodeType === 1) {
+          node.style.textAlign = 'center';
+          return;
+        }
+        node = node.parentNode;
+      }
+      editor.style.textAlign = 'center';
+    }
+
+    function applyTextAlign(editor, align) {
+      const range = getRangeInEditor(editor);
+      if (!range) {
+        editor.style.textAlign = align;
+        return;
+      }
+      let node = range.startContainer;
+      if (node.nodeType === 3) node = node.parentNode;
+      while (node && node !== editor) {
+        if (node.nodeType === 1) {
+          node.style.textAlign = align;
+          return;
+        }
+        node = node.parentNode;
+      }
+      editor.style.textAlign = align;
+    }
+
+    function toggleInlineStyle(editor, styleKey, styleValue) {
+      const range = getRangeInEditor(editor);
+      if (!range || range.collapsed) return;
+      const span = document.createElement('span');
+      span.style[styleKey] = styleValue;
+      const frag = range.extractContents();
+      span.appendChild(frag);
+      range.insertNode(span);
+    }
+
+    function applyLineHeight(editor, value) {
+      const range = getRangeInEditor(editor);
+      if (!range) {
+        editor.style.lineHeight = value;
+        return;
+      }
+      let node = range.startContainer;
+      if (node.nodeType === 3) node = node.parentNode;
+      while (node && node !== editor) {
+        if (node.nodeType === 1) {
+          node.style.lineHeight = value;
+          return;
+        }
+        node = node.parentNode;
+      }
+      editor.style.lineHeight = value;
+    }
+
+    function clearInlineStyle(editor) {
+      const range = getRangeInEditor(editor);
+      if (!range || range.collapsed) return;
+      const span = document.createElement('span');
+      span.style.cssText = 'color:#111827;font-size:1.15rem;font-weight:900;';
+      const frag = range.extractContents();
+      span.appendChild(frag);
+      range.insertNode(span);
+    }
+
+    function rgbToHex(rgb) {
+      const m = String(rgb || '').match(/^rgb\s*\((\d+),\s*(\d+),\s*(\d+)\)$/i);
+      if (!m) return '#111827';
+      const toHex = (v) => Number(v).toString(16).padStart(2, '0');
+      return `#${toHex(m[1])}${toHex(m[2])}${toHex(m[3])}`;
+    }
+
+    function getNodeInEditor(editor) {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return null;
+      const range = sel.getRangeAt(0);
+      if (!editor.contains(range.commonAncestorContainer)) return null;
+      let node = range.startContainer;
+      if (node.nodeType === 3) node = node.parentNode;
+      return node && node.nodeType === 1 ? node : editor;
+    }
+
+    function bindToolbar(toolbar) {
+      const editorId = toolbar.getAttribute('data-editor-id');
+      const editor = document.getElementById(editorId);
+      if (!editor) return;
+      const colorInput = toolbar.querySelector('.tool-color');
+      const sizePxInput = toolbar.querySelector('.tool-size-px');
+      const lineHeightSelect = toolbar.querySelector('.tool-line-height');
+      const boldBtn = toolbar.querySelector('.tool-bold');
+      const underlineBtn = toolbar.querySelector('.tool-underline');
+      const leftBtn = toolbar.querySelector('.tool-left');
+      const centerBtn = toolbar.querySelector('.tool-center');
+      const rightBtn = toolbar.querySelector('.tool-right');
+      const clearBtn = toolbar.querySelector('.tool-clear');
+
+      function refreshToolbarFromSelection() {
+        const node = getNodeInEditor(editor);
+        if (!node) return;
+        const cs = window.getComputedStyle(node);
+        colorInput.value = rgbToHex(cs.color);
+        const sizePx = Math.round(parseFloat(cs.fontSize || '16'));
+        if (Number.isFinite(sizePx)) sizePxInput.value = String(sizePx);
+        const lh = parseFloat(cs.lineHeight || '');
+        if (Number.isFinite(lh) && lh > 0) {
+          const fs = parseFloat(cs.fontSize || '16') || 16;
+          const ratio = (lh / fs).toFixed(1);
+          const opt = [...lineHeightSelect.options].find((o) => o.value === ratio);
+          if (opt) lineHeightSelect.value = ratio;
+        }
+      }
+
+      colorInput.addEventListener('input', () => {
+        applyStyleToSelectionOrCursor(editor, 'color', colorInput.value);
+      });
+
+      sizePxInput.addEventListener('input', () => {
+        const px = Number(sizePxInput.value || 0);
+        if (!Number.isFinite(px) || px < 8 || px > 120) {
+          setStatus('글자 크기는 8~120px 범위로 입력해 주세요.', 'err');
+          return;
+        }
+        applyStyleToSelectionOrCursor(editor, 'fontSize', `${px}px`);
+        setStatus(`글자 크기 ${px}px 적용`, 'ok');
+      });
+      lineHeightSelect.addEventListener('change', () => {
+        applyLineHeight(editor, lineHeightSelect.value);
+      });
+      boldBtn.addEventListener('click', () => toggleInlineStyle(editor, 'fontWeight', '900'));
+      underlineBtn.addEventListener('click', () => toggleInlineStyle(editor, 'textDecoration', 'underline'));
+      leftBtn.addEventListener('click', () => applyTextAlign(editor, 'left'));
+      centerBtn.addEventListener('click', () => applyTextAlign(editor, 'center'));
+      rightBtn.addEventListener('click', () => applyTextAlign(editor, 'right'));
+      clearBtn.addEventListener('click', () => clearInlineStyle(editor));
+
+      editor.addEventListener('keyup', refreshToolbarFromSelection);
+      editor.addEventListener('mouseup', refreshToolbarFromSelection);
+      editor.addEventListener('focus', refreshToolbarFromSelection);
+      document.addEventListener('selectionchange', refreshToolbarFromSelection);
+
+      refreshToolbarFromSelection();
+    }
+
+    async function loadNotices() {
+      setStatus('공지 불러오는 중...');
+      try {
+        const res = await fetch('/api/notices');
+        const data = await res.json();
+        gj2Editor.innerHTML = String(data?.gj2NoticeHtml || '');
+        publicEditor.innerHTML = String(data?.publicNoticeHtml || '');
+        syncPreview(gj2Editor, gj2Preview);
+        syncPreview(publicEditor, publicPreview);
+        setStatus('공지 불러오기 완료', 'ok');
+      } catch (_) {
+        setStatus('공지 불러오기에 실패했습니다.', 'err');
+      }
+    }
+
+    async function saveNotice(target, content, btn) {
+      if (!content.trim()) {
+        setStatus('빈 공지는 저장할 수 없습니다.', 'err');
+        return;
+      }
+      btn.disabled = true;
+      setStatus('저장 중...');
+      try {
+        const res = await fetch('/api/notices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, content }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus('저장 실패: ' + (data?.error || 'unknown-error'), 'err');
+        } else {
+          setStatus('저장 완료: ' + (target === 'gj2' ? '광진2지점' : '공용'), 'ok');
+        }
+      } catch (_) {
+        setStatus('저장 중 오류가 발생했습니다.', 'err');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    gj2SaveBtn.addEventListener('click', () => {
+      saveNotice('gj2', gj2Editor.innerHTML, gj2SaveBtn);
+    });
+    publicSaveBtn.addEventListener('click', () => {
+      saveNotice('public', publicEditor.innerHTML, publicSaveBtn);
+    });
+
+    gj2Editor.addEventListener('input', () => syncPreview(gj2Editor, gj2Preview));
+    publicEditor.addEventListener('input', () => syncPreview(publicEditor, publicPreview));
+
+    document.querySelectorAll('.toolbar').forEach(bindToolbar);
+    loadNotices();
+  </script>
+</body>
+</html>

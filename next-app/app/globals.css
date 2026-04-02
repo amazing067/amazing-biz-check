@@ -71,8 +71,7 @@ body {
   display: block;
   padding: 1.4rem 2.4rem;
   margin-bottom: 1.1rem;
-  min-width: 320px;
-  max-width: 420px;
+  width: min(420px, 86vw); /* 버튼 길이 통일 */
   background: rgba(255, 255, 255, 0.95);
   color: #0f766e;
   text-decoration: none;
