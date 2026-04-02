@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TV 대시보드 - 광진2지점</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; overflow: hidden; }
+    body {
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: #e9eff2;
+      color: #0f172a;
+      height: 100vh;
+    }
+
+    .gj2-layout {
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 44% 56%;
+      gap: 0;
+    }
+
+    /* 좌측: 출근 매니저 */
+    .present-panel {
+      background: #f7fafc;
+      border-right: 2px solid rgba(15, 23, 42, 0.12);
+      border: 10px solid rgba(255, 59, 212, 0.9);
+      box-shadow:
+        0 0 0 3px rgba(8, 255, 214, 0.38),
+        0 0 18px rgba(255, 59, 212, 0.35);
+      padding: 1.4vh 1.2vw 1.0vh;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5vh;
+      min-height: 0;
+    }
+
+    .present-title {
+      font-size: clamp(2.2rem, 5.4vh, 4.3rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      background: linear-gradient(90deg, #7c3aed 0%, #ec4899 45%, #06b6d4 100%);
+      background-size: 240% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin: 0;
+      line-height: 1.05;
+      text-shadow: 0 10px 24px rgba(124, 58, 237, 0.25);
+      text-align: center;
+      animation: nameGradientShift 4.5s ease-in-out infinite; /* 좌측 상단 보라색 애니메이션(초기 느낌) */
+    }
+
+    .present-empty {
+      margin: 0.5vh 0 0;
+      color: #64748b;
+      font-size: clamp(1.05rem, 1.9vh, 1.35rem);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .present-list-wrap {
+      /* 목록 높이를 컨텐츠에 맞추고, 아래 공지사항은 남는 높이를 채우도록 */
+      /* 출근 매니저 5명 영역이 끝나자마자 공지사항이 나오게 */
+      flex: 0 0 auto;
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.8vh;
+    }
+
+    .present-notice {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.6vh 1vw;
+      /* 남는 세로 공간을 끝까지 채움 */
+      flex: 1 1 auto;
+      min-height: 0;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.68);
+      border: 2px solid rgba(124, 58, 237, 0.25);
+      color: #111827;
+      font-weight: 900;
+      /* 레이아웃 깨짐 방지: 원래 범위로 복구 */
+      /* 원래 대비 1.5배 느낌(단, max는 과도하게 키우지 않음) */
+      font-size: clamp(1.55rem, 3.05vh, 2.05rem);
+      text-align: center;
+      flex-direction: column;
+      gap: 0;
+      align-items: stretch;
+      position: relative;
+      overflow: hidden;
+      /* 공지 애니메이션은 끄고 정적으로 */
+      animation: none;
+    }
+
+    /* 공지 텍스트 뒤에만 아주 약한 패턴 배경 */
+    .present-notice::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(90% 80% at 15% 0%, rgba(124, 58, 237, 0.18), transparent 55%),
+        radial-gradient(90% 80% at 90% 20%, rgba(6, 182, 212, 0.14), transparent 55%),
+        repeating-linear-gradient(45deg, rgba(124, 58, 237, 0.035) 0px, rgba(124, 58, 237, 0.035) 1px, transparent 1px, transparent 10px);
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    .present-notice > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .notice-text {
+      width: 100%;
+      text-align: center;
+      line-height: 1.5; /* 행간 1.5로 넓힘 */
+    }
+
+    .notice-strong {
+      color: #ef4444;
+      font-weight: 1000;
+      text-shadow: 0 10px 24px rgba(239, 68, 68, 0.15);
+      font-size: clamp(1.65rem, 3.15vh, 2.25rem);
+    }
+    .notice-sub {
+      font-size: clamp(1.35rem, 2.55vh, 1.6rem);
+      font-weight: 900;
+      color: #111827;
+    }
+
+    .notice-top {
+      color: #2563eb; /* 파란색 */
+      font-weight: 1000;
+      font-size: clamp(1.75rem, 3.45vh, 2.4rem);
+      line-height: 1.15;
+      text-shadow: 0 8px 18px rgba(37,99,235,0.12);
+    }
+
+    .notice-yn {
+      color: #ef4444; /* 예/아니오 빨간색 */
+      font-weight: 1000;
+    }
+
+    @keyframes noticeGlowPulse {
+      0% {
+        box-shadow: 0 0 0 rgba(124,58,237,0);
+        border-color: rgba(124, 58, 237, 0.25);
+      }
+      50% {
+        box-shadow: 0 0 18px rgba(124, 58, 237, 0.22);
+        border-color: rgba(124, 58, 237, 0.42);
+      }
+      100% {
+        box-shadow: 0 0 0 rgba(124,58,237,0);
+        border-color: rgba(124, 58, 237, 0.25);
+      }
+    }
+
+    @keyframes nameGradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes nameFloat {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-0.18vh); }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes phoneFloat {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-0.12vh); }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes underlineShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* 움직임 없이 글로우/언더라인만 살짝 펄스 */
+    @keyframes nameGlowPulse {
+      0% {
+        text-shadow:
+          0 1px 0 rgba(255,255,255,0.65),
+          0 6px 14px rgba(15,23,42,0.10);
+      }
+      50% {
+        text-shadow:
+          0 1px 0 rgba(255,255,255,0.75),
+          0 0 18px rgba(124,58,237,0.22),
+          0 0 28px rgba(236,72,153,0.16);
+      }
+      100% {
+        text-shadow:
+          0 1px 0 rgba(255,255,255,0.65),
+          0 6px 14px rgba(15,23,42,0.10);
+      }
+    }
+
+    @keyframes phoneGlowPulse {
+      0% {
+        text-shadow:
+          0 1px 0 rgba(255,255,255,0.7),
+          0 10px 22px rgba(15,23,42,0.10);
+      }
+      50% {
+        text-shadow:
+          0 1px 0 rgba(255,255,255,0.85),
+          0 0 18px rgba(6,182,212,0.18),
+          0 0 28px rgba(236,72,153,0.12);
+      }
+      100% {
+        text-shadow:
+          0 1px 0 rgba(255,255,255,0.7),
+          0 10px 22px rgba(15,23,42,0.10);
+      }
+    }
+
+    @keyframes underlinePulse {
+      0% { opacity: 0.7; filter: blur(0px); }
+      50% { opacity: 1; filter: blur(0.2px); }
+      100% { opacity: 0.7; filter: blur(0px); }
+    }
+
+    /* present card 기본(작은 배지) */
+    .present-list {
+      width: 100%;
+      align-items: center;
+    }
+
+    .present-list.big {
+      display: flex;
+      flex-direction: column;
+      gap: 1.0vh;
+      padding-top: 0.2vh;
+    }
+
+    /* 6명 이후(나머지)는 카드형태로 작게 */
+    .present-list.small {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8vh 1.0vw;
+      justify-items: center;
+      align-content: start;
+      padding-top: 0.2vh;
+    }
+
+    .present-list.two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.9vh 1.0vw;
+      padding-top: 0.2vh;
+      justify-items: center;
+      align-content: start;
+    }
+
+    /* 6~8명: 오른쪽 phone-book과 같은 "네모 카드" 형태(로고-이름-전화) */
+    .present-list.phonecards {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* 한 줄 2명 */
+      gap: 0.7vh 0.9vw;
+      padding-top: 0.2vh;
+      justify-items: stretch;
+      align-content: start;
+    }
+
+    .present-list.phonecards .mgr-card {
+      /* 왼쪽 패널용으로 카드 높이를 줄여서 6~8명 + 공지까지 같이 들어오게 */
+      padding: 0.50vh 0.35vw;
+      border-radius: 12px;
+      box-shadow: 0 10px 22px rgba(15,23,42,0.05);
+      grid-template-rows: auto auto auto;
+      gap: 0.22vh;
+      min-height: 8.0vh;
+    }
+
+    .present-list.phonecards .mgr-logo {
+      max-height: 5.2vh;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,0.22));
+    }
+
+    .present-list.phonecards .mgr-logo-placeholder {
+      width: 100%;
+      height: 5.2vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.65;
+      font-weight: 1000;
+      color: #0b1220;
+      text-align: center;
+    }
+
+    .present-list.phonecards .mgr-name {
+      font-size: clamp(0.95rem, 2.0vh, 1.32rem);
+      line-height: 1.1;
+    }
+
+    .present-list.phonecards .mgr-phone {
+      font-size: clamp(1.02rem, 2.3vh, 1.60rem);
+      text-shadow: none;
+    }
+
+    .present-row {
+      display: grid;
+      grid-template-columns: 36% 64%;
+      align-items: center;
+      gap: 1.0vw;
+      padding: 0.8vh 0.9vw;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      width: min(96%, 860px);
+      position: relative;
+      overflow: hidden;
+      min-height: 11vh;
+    }
+
+    .present-row > * { position: relative; z-index: 1; }
+
+    .present-row::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(120% 140% at 20% 0%, rgba(124,58,237,0.10), transparent 55%),
+        radial-gradient(120% 140% at 90% 20%, rgba(6,182,212,0.08), transparent 55%);
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    .present-row .logo {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      min-width: 0;
+    }
+    .present-row .logo img {
+      height: clamp(32px, 4.8vh, 56px);
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .present-row .meta {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) max-content;
+      grid-template-rows: auto auto;
+      gap: 0.3vh 1.0vw;
+      align-items: baseline;
+      padding-right: 0.6vw;
+    }
+
+    .present-row .company {
+      grid-column: 1 / -1;
+      font-size: clamp(1.05rem, 2.0vh, 1.6rem);
+      font-weight: 900;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+
+    .present-row .name {
+      font-size: clamp(1.05rem, 2.1vh, 1.55rem);
+      font-weight: 900;
+      color: #1e293b;
+      text-shadow:
+        0 1px 0 rgba(255,255,255,0.6),
+        0 6px 14px rgba(15,23,42,0.10);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+    }
+
+    .present-row .phone {
+      font-size: clamp(1.15rem, 2.4vh, 1.7rem);
+      font-weight: 900;
+      color: #0f172a;
+      text-shadow:
+        0 1px 0 rgba(255,255,255,0.75),
+        0 10px 20px rgba(6,182,212,0.12),
+        0 14px 26px rgba(15,23,42,0.10);
+      white-space: nowrap;
+      justify-self: end;
+      text-align: right;
+    }
+
+    /* 6명 이하(큰 배지): 로고/회사 표시 + 가운데 정렬 + 크게 */
+    .present-list.big .present-row {
+      grid-template-columns: 36% 64%;
+      width: min(96%, 720px);
+      min-height: 12vh;
+      padding: 1.0vh 1.0vw;
+    }
+    .present-list.big .present-row .meta {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 0.4vh;
+      padding-right: 0;
+      text-align: center;
+      justify-items: center;
+    }
+    .present-list.big .present-row .company {
+      display: none; /* 로고가 있으니 회사명 텍스트 제거 */
+    }
+    .present-list.big .present-row .name {
+      text-align: center;
+      font-size: clamp(1.6rem, 3.25vh, 2.25rem);
+      position: relative;
+      color: #0b1220;
+      /* 글로우(그림자) 제거: 기본 가독성 유지 */
+      text-shadow: none;
+      /* 이동 없이 강조(글로우가 아니라 기본 그림자) */
+      white-space: nowrap;
+    }
+    .present-list.big .present-row .phone {
+      justify-self: center;
+      text-align: center;
+      font-size: clamp(1.65rem, 3.35vh, 2.4rem);
+      color: #0b1220;
+      /* 글로우(그림자) 제거 */
+      text-shadow: none;
+      position: relative;
+    }
+
+    .present-list.big .present-row .name::before {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: block;
+      pointer-events: none;
+
+      font: inherit;
+      line-height: inherit;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      background: linear-gradient(90deg, #6d28d9 0%, #ec4899 35%, #06b6d4 70%, #6d28d9 100%);
+      background-size: 220% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      animation: nameGradientShift 2.8s ease-in-out infinite;
+    }
+
+    .present-list.big .present-row .phone::before {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      display: block;
+      pointer-events: none;
+
+      font: inherit;
+      line-height: inherit;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      background: linear-gradient(90deg, #6d28d9 0%, #ec4899 35%, #06b6d4 70%, #6d28d9 100%);
+      background-size: 220% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      animation: nameGradientShift 2.8s ease-in-out infinite;
+    }
+
+    /* 이름 아래 스윕(그라데이션 언더라인) */
+    .present-list.big .present-row .name::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -0.55vh;
+      width: min(78%, 520px);
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(124,58,237,0) 0%, rgba(236,72,153,0.65) 35%, rgba(6,182,212,0.65) 65%, rgba(124,58,237,0) 100%);
+      background-size: 200% 100%;
+      opacity: 0.95;
+      /* 언더라인은 정적으로(글로우/움직임 최소화) */
+      animation: none;
+      display: block;
+      pointer-events: none;
+    }
+
+    /* 7명 이상(작은 배지): 기존 tv.html 느낌대로(2열, 로고 숨김, 가운데) */
+    .present-list.two-col .present-row {
+      width: min(98%, 420px);
+      grid-template-columns: 34% 66%;
+      padding: 0.95vh 0.9vw;
+      min-height: 11.2vh;
+    }
+
+    /* small 카드: 로고/폰트 크기와 높이를 줄여서 한 화면에 들어오게 */
+    .present-list.small .present-row {
+      width: min(98%, 420px);
+      grid-template-columns: 34% 66%;
+      padding: 0.75vh 0.8vw;
+      min-height: 8.6vh;
+    }
+    .present-list.small .present-row .logo img {
+      height: clamp(26px, 3.6vh, 44px);
+    }
+    .present-list.small .present-row .company {
+      display: none; /* 로고가 있으니 회사명 텍스트 제거 */
+    }
+    .present-list.small .present-row .name {
+      font-size: clamp(1.08rem, 2.0vh, 1.35rem);
+    }
+    .present-list.small .present-row .phone {
+      font-size: clamp(1.1rem, 2.4vh, 1.5rem);
+    }
+    .present-list.small .present-row .meta {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      padding-right: 0;
+      gap: 0.28vh 0;
+      justify-items: center;
+      text-align: center;
+    }
+    .present-list.small .present-row .phone {
+      justify-self: center;
+      text-align: center;
+    }
+    .present-list.two-col .present-row .meta {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+      padding-right: 0;
+      gap: 0.22vh 0;
+      justify-items: center;
+      align-items: center;
+      text-align: center;
+    }
+    .present-list.two-col .present-row .company { font-size: clamp(1.05rem, 1.9vh, 1.45rem); }
+    .present-list.two-col .present-row .name { font-size: clamp(1.1rem, 2.2vh, 1.5rem); }
+    .present-list.two-col .present-row .phone { font-size: clamp(1.08rem, 2.2vh, 1.5rem); justify-self: center; }
+
+    /* 우측: 전체 보험사 매니저 전화번호(회사 그룹) */
+    .phone-panel {
+      padding: 1.2vh 1.2vw;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9vh;
+      min-height: 0;
+      background: #ffffff;
+      border-left: 2px solid rgba(15,23,42,0.08);
+      color: #0f172a;
+    }
+
+    .phone-title {
+      margin: 0;
+      font-size: clamp(1.8rem, 4.3vh, 3.0rem);
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+      color: #0b1220;
+      text-shadow: 0 3px 10px rgba(15,23,42,0.08);
+    }
+
+    .phone-book {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden; /* 스크롤 없이 한 화면 */
+      padding-right: 0.2vw;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-auto-rows: 1fr; /* 남는 높이를 행 트랙으로 분배 */
+      gap: 0.6vh 0.65vw;
+      align-content: stretch;
+    }
+
+    @media (max-width: 1400px) {
+      .phone-book { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    /* 매니저 카드(로고 + 이름 + 전화번호) */
+    .mgr-card {
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid rgba(15,23,42,0.10);
+      box-shadow: 0 12px 26px rgba(15,23,42,0.06);
+      overflow: hidden;
+      padding: 0.65vh 0.55vw;
+      display: grid;
+      /* 원래 카드형: 로고 + 이름 + 전화번호 */
+      grid-template-rows: 1fr auto auto;
+      gap: 0.35vh;
+      align-content: center;
+      align-items: start;
+    }
+
+    .mgr-logo {
+      width: 100%;
+      height: 100%;
+      max-height: 7vh;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 8px 18px rgba(0,0,0,0.25));
+    }
+
+    .mgr-name {
+      font-weight: 1000;
+      font-size: clamp(0.98rem, 2.0vh, 1.45rem);
+      color: #0b1220;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+
+    .mgr-phone {
+      font-weight: 1000;
+      font-size: clamp(1.08rem, 2.6vh, 2.05rem);
+      color: #0b1220;
+      text-shadow: 0 3px 10px rgba(15,23,42,0.10);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="gj2-layout">
+    <section class="present-panel" aria-label="오늘 출근한 매니저 - 광진2지점">
+      <h1 class="present-title">오늘 출근한 매니저님</h1>
+      <p id="gj2PresentEmpty" class="present-empty" style="display:none;">출근한 매니저가 없습니다.</p>
+
+      <div class="present-list-wrap">
+        <div id="gj2PresentListBig" class="present-list big"></div>
+        <div id="gj2PresentListSmall" class="present-list small"></div>
+      </div>
+
+      <div id="gj2Notice" class="present-notice" style="display:none;">
+      <div class="notice-text">
+        <div class="notice-top">4월부터 전체보험사 모니터링이 변경되었습니다</div>
+        <div>질문 복잡해지고 <span class="notice-yn">예/아니오</span> 섞여서 나오니</div>
+        <div>끝까지 확인 한 후 답변해주세요!!</div>
+        <div class="notice-strong">청약 후 3시간 후에만 해피콜 진행가능</div>
+        <div class="notice-sub">(3시간 전에는 해피콜 진행이 불가능합니다)</div>
+      </div>
+      </div>
+    </section>
+
+    <section class="phone-panel" aria-label="전체 보험사 매니저 전화번호">
+      <div id="phoneBook" class="phone-book"></div>
+    </section>
+  </div>
+
+  <script>
+    const presentBigEl = document.getElementById('gj2PresentListBig');
+    const presentSmallEl = document.getElementById('gj2PresentListSmall');
+    const presentEmptyEl = document.getElementById('gj2PresentEmpty');
+    const noticeEl = document.getElementById('gj2Notice');
+    const phoneBookEl = document.getElementById('phoneBook');
+
+    let managersCache = [];
+    let presentCache = [];
+
+    const PRESENT_BIG_MAX = 5;
+    const PRESENT_TOTAL_MAX = 8;
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s ?? '';
+      return div.innerHTML;
+    }
+
+    function presentRowHtml(r) {
+      const logoUrl = r.logo ? '/logos/' + encodeURIComponent(r.logo) : '';
+      const logoHtml = logoUrl
+        ? `<div class="logo"><img src="${logoUrl}" alt="" onerror="this.parentElement.innerHTML=''"></div>`
+        : `<div class="logo"></div>`;
+
+      const companyColor = r.color ? escapeHtml(r.color) : '';
+      const companyStyleAttr = companyColor ? ` style="color:${companyColor}"` : '';
+      const companyText = `<span${companyStyleAttr}>${escapeHtml(r.company)}</span>`;
+
+      const nameText = escapeHtml(r.name) + (r.suffix ? ' ' + escapeHtml(r.suffix) : '');
+      const phone = escapeHtml(r.phone || '');
+
+      return `<div class="present-row">
+        ${logoHtml}
+        <div class="meta">
+          <div class="company">${companyText}</div>
+          <div class="name" data-text="${nameText}">${nameText}</div>
+          <div class="phone" data-text="${phone}">${phone}</div>
+        </div>
+      </div>`;
+    }
+
+    function presentPhoneCardHtml(r) {
+      const logoUrl = r.logo ? '/logos/' + encodeURIComponent(r.logo) : '';
+      const logoHtml = logoUrl
+        ? `<img class="mgr-logo" src="${logoUrl}" alt="" onerror="this.style.display='none'">`
+        : `<div class="mgr-logo-placeholder">로고</div>`;
+
+      const suffix = r.suffix ? (' ' + escapeHtml(r.suffix)) : '';
+      const name = escapeHtml(r.name || '');
+      const phone = escapeHtml(r.phone || '');
+
+      return `<div class="mgr-card present-mgr-card">
+        ${logoHtml}
+        <div class="mgr-name">${name}${suffix}</div>
+        <div class="mgr-phone">${phone}</div>
+      </div>`;
+    }
+
+    function renderPresent() {
+      const present = presentCache || [];
+      if (!present.length) {
+      presentBigEl.innerHTML = '';
+      presentSmallEl.innerHTML = '';
+        presentEmptyEl.style.display = 'block';
+        noticeEl.style.display = 'none';
+      presentBigEl.className = 'present-list big';
+      presentSmallEl.className = 'present-list small';
+        return;
+      }
+
+      presentEmptyEl.style.display = 'none';
+      // 5명까지만 한 화면에 크게, 바로 아래 공지사항
+      noticeEl.style.display = 'flex';
+
+      if (present.length <= PRESENT_BIG_MAX) {
+        const bigCards = present.slice(0, PRESENT_BIG_MAX);
+        presentBigEl.className = 'present-list big';
+        presentBigEl.innerHTML = bigCards.map((r) => presentRowHtml(r)).join('');
+
+        presentSmallEl.className = 'present-list small';
+        presentSmallEl.innerHTML = '';
+        presentBigEl.style.display = '';
+        presentSmallEl.style.display = 'none';
+      } else {
+        const cards = present.slice(0, PRESENT_TOTAL_MAX);
+        presentBigEl.className = 'present-list big';
+        presentBigEl.innerHTML = '';
+        presentBigEl.style.display = 'none';
+
+        presentSmallEl.className = 'present-list phonecards';
+        presentSmallEl.innerHTML = cards.map((r) => presentPhoneCardHtml(r)).join('');
+        presentSmallEl.style.display = '';
+      }
+    }
+
+    function renderPhoneBook() {
+      const list = managersCache || [];
+      if (!list.length) {
+        phoneBookEl.innerHTML = '<div style="opacity:0.85;font-weight:900;">매니저 정보를 불러올 수 없습니다.</div>';
+        return;
+      }
+
+      // 스크롤 없이: 회사명 텍스트 없이 로고 + 이름 + 전화만 카드형으로 모두 표시
+      const orderCategories = ['손해보험', '생명보험'];
+      const sorted = [...list].sort((a, b) => {
+        const ca = a.category || '';
+        const cb = b.category || '';
+        const ia = orderCategories.indexOf(ca);
+        const ib = orderCategories.indexOf(cb);
+        const da = ia === -1 ? 999 : ia;
+        const db = ib === -1 ? 999 : ib;
+        if (da !== db) return da - db;
+        return Number(a.id || 0) - Number(b.id || 0);
+      });
+
+      // 카드 수가 많아도 grid 행 트랙 분배로 한 화면에 들어가게 함
+      const html = sorted.map((m) => {
+        const logoUrl = m.logo ? '/logos/' + encodeURIComponent(m.logo) : '';
+        const logoHtml = logoUrl
+          ? `<img class="mgr-logo" src="${logoUrl}" alt="" onerror="this.style.display='none'">`
+          : `<div style="opacity:0.65;font-weight:1000;text-align:center;">로고</div>`;
+
+        const suffix = m.suffix ? (' ' + escapeHtml(m.suffix)) : '';
+        const name = escapeHtml(m.name || '');
+        const phone = escapeHtml(m.phone || '');
+
+        return `<div class="mgr-card">
+          ${logoHtml}
+          <div class="mgr-name">${name}${suffix}</div>
+          <div class="mgr-phone">${phone}</div>
+        </div>`;
+      }).join('');
+
+      phoneBookEl.innerHTML = html;
+    }
+
+    async function loadAll() {
+      const [managers, records] = await Promise.all([
+        fetch('/api/managers').then((r) => r.json()),
+        fetch('/api/attendance/today').then((r) => r.json()),
+      ]);
+
+      managersCache = Array.isArray(managers) ? managers : [];
+      presentCache = (Array.isArray(records) ? records : []).filter((r) => !r.checkoutAt);
+
+      renderPresent();
+      renderPhoneBook();
+    }
+
+    loadAll().catch(() => {
+      presentBigEl.innerHTML = '';
+      presentSmallEl.innerHTML = '';
+      presentEmptyEl.style.display = 'block';
+      phoneBookEl.innerHTML = '<div style="opacity:0.85;font-weight:900;">로딩 실패</div>';
+    });
+
+    setInterval(() => {
+      loadAll().catch(() => {});
+    }, 10000);
+  </script>
+</body>
+</html>
+

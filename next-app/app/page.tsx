@@ -16,8 +16,11 @@ export default function Home() {
       <p className="landing-subtitle">TV 대시보드 · 출/퇴근 체크(태블릿)</p>
 
       <div className="landing-buttons">
-        <Link href="/tv.html" className="landing-button">
-          📺 TV 대시보드 (메인 화면)
+        <Link href="/tv-gj2.html" className="landing-button">
+          📺 TV 대시보드 (광진2지점)
+        </Link>
+        <Link href="/tv-public.html" className="landing-button">
+          📺 TV 대시보드 (공용)
         </Link>
         <Link href="/checkin.html" className="landing-button">
           ✅ 출근 / 퇴근 체크 (태블릿)
