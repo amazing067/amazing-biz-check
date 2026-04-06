@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TV 공용 대시보드 — PNG / PDF 등록</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: linear-gradient(180deg, #dbeafe 0%, #e0e7ff 45%, #f5f3ff 100%);
+      color: #0f172a;
+      padding: 1rem;
+    }
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      gap: 1rem;
+    }
+    h1 {
+      margin: 0;
+      text-align: center;
+      font-size: 1.65rem;
+      color: #1e3a8a;
+    }
+    .sub {
+      margin: 0;
+      text-align: center;
+      color: #475569;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .nav a {
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .panel {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 14px;
+      padding: 1rem;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.07);
+      display: grid;
+      gap: 0.65rem;
+    }
+    .title {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #0f172a;
+      font-weight: 900;
+    }
+    .hint {
+      margin: 0;
+      font-size: 0.88rem;
+      color: #64748b;
+      font-weight: 600;
+      line-height: 1.45;
+    }
+    .drop {
+      border: 2px dashed rgba(37, 99, 235, 0.45);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+      cursor: pointer;
+      background: #f8fafc;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .drop:hover, .drop.drag-over {
+      background: #eff6ff;
+      border-color: rgba(37, 99, 235, 0.85);
+    }
+    .drop strong {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: #1e40af;
+    }
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .preview-box {
+      max-height: 280px;
+      overflow: auto;
+      border-radius: 10px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: #fff;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 0.5rem;
+    }
+    .preview-box img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .meta {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 0.5rem 0.85rem;
+      font-weight: 900;
+      font-size: 0.92rem;
+      cursor: pointer;
+      color: #fff;
+      background: #1e40af;
+    }
+    .btn:hover { background: #1d4ed8; }
+    .btn.danger {
+      background: #b91c1c;
+    }
+    .btn.danger:hover { background: #991b1b; }
+    .btn.secondary {
+      background: #475569;
+    }
+    .btn.secondary:hover { background: #334155; }
+    .status {
+      text-align: center;
+      font-weight: 800;
+      min-height: 1.5rem;
+      color: #0f766e;
+    }
+    .status.err { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>TV 대시보드 (공용) 자료 등록</h1>
+    <p class="sub">제안서·PDF는 <strong>서버(<code>public/docs</code>)</strong>에 저장되며 Chrome·Edge·TV 등 <strong>모든 기기에서 동일</strong>하게 보입니다. 새 파일을 올리면 이전 파일을 덮어씁니다.</p>
+    <div class="nav">
+      <a href="/">← 메인</a>
+      <span>·</span>
+      <a href="/tv-public.html" target="_blank" rel="noopener">TV 공용 대시보드 열기</a>
+    </div>
+
+    <section class="panel">
+      <h2 class="title">제안서 (PNG)</h2>
+      <p class="hint">PNG만 등록 가능합니다. 드래그 앤 드롭하거나 아래 영역을 클릭해 파일을 선택하세요.</p>
+      <div class="meta" id="pngMeta">저장된 파일: 없음 (서버 기본 이미지 사용)</div>
+      <label class="drop" id="pngDrop" for="pngInput">
+        <strong>PNG 끌어다 놓기 또는 클릭</strong>
+        <span>가입 제안서 이미지</span>
+      </label>
+      <input type="file" id="pngInput" class="file-input" accept="image/png,.png">
+      <div class="preview-box">
+        <img id="pngPreview" alt="제안서 미리보기" src="/docs/kb-signup.png">
+      </div>
+      <div class="row">
+        <button type="button" class="btn danger" id="pngResetBtn">서버 기본 제안서로 되돌리기</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="title">월간 프라임 (PDF)</h2>
+      <p class="hint">PDF만 등록 가능합니다 ( 한 페이지당 5분). 등록이 없을 때만 TV에 기본 PDF가 쓰입니다. 새 PDF는 서버에서 이전 파일을 덮어씁니다.</p>
+      <div class="meta" id="pdfMeta">저장된 파일: 없음 (서버 기본 PDF 사용)</div>
+      <label class="drop" id="pdfDrop" for="pdfInput">
+        <strong>PDF 끌어다 놓기 또는 클릭</strong>
+        <span>월간 프라임 PDF</span>
+      </label>
+      <input type="file" id="pdfInput" class="file-input" accept="application/pdf,.pdf">
+      <div class="row">
+        <button type="button" class="btn danger" id="pdfResetBtn">서버 기본 PDF로 되돌리기</button>
+      </div>
+    </section>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    (function checkPasswordGate() {
+      var PASSWORD = 'amazing1234';
+      var KEY = 'tv-public-assets-auth-ok';
+      if (sessionStorage.getItem(KEY) === '1') return;
+      var input = window.prompt('TV 공용 자료 등록 비밀번호를 입력하세요.');
+      if (input === null || input.trim() !== PASSWORD) {
+        alert('비밀번호가 올바르지 않습니다.');
+        window.location.href = '/';
+        return;
+      }
+      sessionStorage.setItem(KEY, '1');
+    })();
+
+    var UPLOAD_PASSWORD = 'amazing1234';
+
+    var statusEl = document.getElementById('status');
+    var pngPreview = document.getElementById('pngPreview');
+    var pngMeta = document.getElementById('pngMeta');
+    var pdfMeta = document.getElementById('pdfMeta');
+    var pngInput = document.getElementById('pngInput');
+    var pdfInput = document.getElementById('pdfInput');
+    var pngDrop = document.getElementById('pngDrop');
+    var pdfDrop = document.getElementById('pdfDrop');
+
+    function setStatus(msg, err) {
+      statusEl.textContent = msg || '';
+      statusEl.className = 'status' + (err ? ' err' : '');
+    }
+
+    function fetchMeta() {
+      return fetch('/api/tv-public/meta', { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('meta');
+        return r.json();
+      });
+    }
+
+    function postUpload(formData) {
+      return fetch('/api/tv-public/upload', { method: 'POST', body: formData }).then(function (r) {
+        return r.json().then(function (data) {
+          if (!r.ok) {
+            throw new Error(data.error || 'upload-failed');
+          }
+          return data;
+        });
+      });
+    }
+
+    function isPng(f) {
+      if (!f) return false;
+      if (f.type === 'image/png') return true;
+      return /\.png$/i.test(f.name || '');
+    }
+
+    function isPdf(f) {
+      if (!f) return false;
+      if (f.type === 'application/pdf') return true;
+      return /\.pdf$/i.test(f.name || '');
+    }
+
+    function bindDrop(zone, inputEl, onFile) {
+      zone.addEventListener('dragenter', function (e) {
+        e.preventDefault();
+        zone.classList.add('drag-over');
+      });
+      zone.addEventListener('dragleave', function (e) {
+        e.preventDefault();
+        var rel = e.relatedTarget;
+        if (!rel || !zone.contains(rel)) {
+          zone.classList.remove('drag-over');
+        }
+      });
+      zone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+      });
+      zone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) onFile(f);
+      });
+      inputEl.addEventListener('change', function () {
+        var f = inputEl.files && inputEl.files[0];
+        if (f) onFile(f);
+        inputEl.value = '';
+      });
+    }
+
+    function applyMetaToUi(meta) {
+      if (meta.proposal) {
+        pngPreview.src = '/docs/tv-public-proposal.png?v=' + meta.rev;
+        pngMeta.textContent = '서버에 등록됨 (모든 브라우저·TV 공통) · rev ' + meta.rev;
+      } else {
+        pngPreview.src = '/docs/kb-signup.png';
+        pngMeta.textContent = '등록 없음 — TV는 기본 제안서 이미지 사용';
+      }
+      if (meta.pdf) {
+        pdfMeta.textContent = '서버에 등록됨 (공통) · 페이지당 5분 · rev ' + meta.rev;
+      } else {
+        pdfMeta.textContent = '등록 없음 — TV는 기본 PDF 사용';
+      }
+    }
+
+    function loadState() {
+      fetchMeta()
+        .then(function (meta) {
+          applyMetaToUi(meta);
+        })
+        .catch(function () {
+          applyMetaToUi({ rev: 0, proposal: false, pdf: false });
+          setStatus('상태를 불러오지 못했습니다.', true);
+        });
+    }
+
+    function savePng(file) {
+      if (!isPng(file)) {
+        alert('PNG 파일만 넣을 수 있습니다.');
+        return;
+      }
+      var fd = new FormData();
+      fd.append('password', UPLOAD_PASSWORD);
+      fd.append('proposal', file);
+      postUpload(fd)
+        .then(function () {
+          setStatus('서버에 저장했습니다. Chrome·Edge·TV 모두 동일하게 보입니다.');
+          return fetchMeta();
+        })
+        .then(function (meta) {
+          applyMetaToUi(meta);
+        })
+        .catch(function (err) {
+          setStatus('PNG 저장 실패: ' + (err.message || '오류'), true);
+        });
+    }
+
+    function savePdf(file) {
+      if (!isPdf(file)) {
+        alert('PDF 파일만 넣을 수 있습니다.');
+        return;
+      }
+      var fd = new FormData();
+      fd.append('password', UPLOAD_PASSWORD);
+      fd.append('pdf', file);
+      postUpload(fd)
+        .then(function (data) {
+          setStatus('서버에 덮어썼습니다. 이전 PDF는 교체되었습니다.');
+          return fetchMeta();
+        })
+        .then(function (meta) {
+          applyMetaToUi(meta);
+        })
+        .catch(function (err) {
+          setStatus('PDF 저장 실패: ' + (err.message || '오류'), true);
+        });
+    }
+
+    bindDrop(pngDrop, pngInput, savePng);
+    bindDrop(pdfDrop, pdfInput, savePdf);
+
+    document.getElementById('pngResetBtn').addEventListener('click', function () {
+      if (!window.confirm('서버에 올린 제안서 PNG를 삭제하고 기본 이미지로 돌릴까요?')) return;
+      var fd = new FormData();
+      fd.append('password', UPLOAD_PASSWORD);
+      fd.append('resetProposal', '1');
+      postUpload(fd)
+        .then(function () {
+          setStatus('제안서 등록을 지웠습니다.');
+          return fetchMeta();
+        })
+        .then(function (meta) {
+          applyMetaToUi(meta);
+        })
+        .catch(function () {
+          setStatus('초기화에 실패했습니다.', true);
+        });
+    });
+
+    document.getElementById('pdfResetBtn').addEventListener('click', function () {
+      if (!window.confirm('서버에 올린 PDF를 삭제하고 기본 파일로 돌릴까요?')) return;
+      var fd = new FormData();
+      fd.append('password', UPLOAD_PASSWORD);
+      fd.append('resetPdf', '1');
+      postUpload(fd)
+        .then(function () {
+          setStatus('PDF 등록을 지웠습니다.');
+          return fetchMeta();
+        })
+        .then(function (meta) {
+          applyMetaToUi(meta);
+        })
+        .catch(function () {
+          setStatus('초기화에 실패했습니다.', true);
+        });
+    });
+
+    loadState();
+  </script>
+</body>
+</html>

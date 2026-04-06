@@ -25,6 +25,11 @@ export default function Home() {
     router.push("/notice-admin.html");
   }
 
+  function handleTvPublicAssetsClick() {
+    if (!verifyPassword("tv-public-assets-auth-ok")) return;
+    router.push("/tv-public-admin.html");
+  }
+
   function handleCheckinClick() {
     if (!verifyPassword("checkin-auth-ok")) return;
     router.push("/checkin.html");
@@ -56,6 +61,9 @@ export default function Home() {
         </button>
         <button type="button" className="landing-button" onClick={handleNoticeAdminClick}>
           📝 공지사항 수정 (광진2/공용)
+        </button>
+        <button type="button" className="landing-button" onClick={handleTvPublicAssetsClick}>
+          🖼️ TV 공용 제안서·PDF 등록
         </button>
       </div>
     </div>
