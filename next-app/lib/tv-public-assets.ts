@@ -1,39 +1,25 @@
-import { promises as fs } from "fs";
-import path from "path";
-
 export const TV_PUBLIC_PROPOSAL_FILE = "tv-public-proposal.png";
 export const TV_PUBLIC_PDF_FILE = "tv-public-monthly.pdf";
 export const TV_PUBLIC_META_FILE = "tv-public-meta.json";
+export const TV_PUBLIC_STORAGE_BUCKET = "tv-public";
+export const TV_PUBLIC_STORAGE_PREFIX = "assets";
 
 export type TvPublicMeta = { rev: number; proposal: boolean; pdf: boolean };
 
-export function getTvPublicDocsDir(): string {
-  return path.join(process.cwd(), "public", "docs");
+export function getTvPublicStorageProposalPath(): string {
+  return `${TV_PUBLIC_STORAGE_PREFIX}/${TV_PUBLIC_PROPOSAL_FILE}`;
+}
+
+export function getTvPublicStoragePdfPath(): string {
+  return `${TV_PUBLIC_STORAGE_PREFIX}/${TV_PUBLIC_PDF_FILE}`;
 }
 
 export async function readTvPublicMeta(): Promise<TvPublicMeta> {
-  const p = path.join(getTvPublicDocsDir(), TV_PUBLIC_META_FILE);
-  try {
-    const t = await fs.readFile(p, "utf8");
-    const j = JSON.parse(t) as Record<string, unknown>;
-    return {
-      rev: Number(j.rev) || 0,
-      proposal: Boolean(j.proposal),
-      pdf: Boolean(j.pdf),
-    };
-  } catch {
-    return { rev: 0, proposal: false, pdf: false };
-  }
+  return { rev: 0, proposal: false, pdf: false };
 }
 
-export async function writeTvPublicMeta(m: TvPublicMeta): Promise<void> {
-  const dir = getTvPublicDocsDir();
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(
-    path.join(dir, TV_PUBLIC_META_FILE),
-    JSON.stringify(m, null, 0),
-    "utf8",
-  );
+export async function writeTvPublicMeta(_: TvPublicMeta): Promise<void> {
+  // Supabase Storage 기반으로 전환되어 메타 파일은 사용하지 않는다.
 }
 
 export function getTvPublicUploadPassword(): string {

@@ -262,8 +262,8 @@
           return r.json();
         })
         .then(function (meta) {
-          if (meta && meta.proposal) {
-            kbImg.src = '/docs/tv-public-proposal.png?v=' + meta.rev;
+          if (meta && meta.proposal && meta.proposalUrl) {
+            kbImg.src = meta.proposalUrl;
           } else {
             kbImg.src = '/docs/kb-signup.png';
           }
@@ -486,8 +486,8 @@
             return r.json();
           })
           .then(function (meta) {
-            if (meta && meta.pdf) {
-              var u = '/docs/tv-public-monthly.pdf?v=' + meta.rev;
+            if (meta && meta.pdf && meta.pdfUrl) {
+              var u = meta.pdfUrl;
               return fetch(u, { cache: 'no-store' }).then(function (res) {
                 if (!res.ok) throw new Error('pdf');
                 return res.arrayBuffer();

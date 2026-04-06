@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 import {
-  getTvPublicDocsDir,
+  getTvPublicStoragePdfPath,
+  getTvPublicStorageProposalPath,
   getTvPublicUploadPassword,
   isPdfBuffer,
   isPngBuffer,
-  readTvPublicMeta,
-  TV_PUBLIC_PDF_FILE,
-  TV_PUBLIC_PROPOSAL_FILE,
-  writeTvPublicMeta,
+  TV_PUBLIC_STORAGE_BUCKET,
 } from "@/lib/tv-public-assets";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,39 +17,32 @@ const MAX_PDF = 80 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      return NextResponse.json({ error: "supabase-not-configured" }, { status: 503 });
+    }
+
     const form = await req.formData();
     const password = String(form.get("password") ?? "").trim();
     if (password !== getTvPublicUploadPassword()) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    const dir = getTvPublicDocsDir();
-    await fs.mkdir(dir, { recursive: true });
-    const meta = await readTvPublicMeta();
+    const proposalPath = getTvPublicStorageProposalPath();
+    const pdfPath = getTvPublicStoragePdfPath();
+
+    // 버킷이 없는 환경 대비: 있으면 무시
+    await supabase.storage.createBucket(TV_PUBLIC_STORAGE_BUCKET, { public: false }).catch(() => {});
 
     const resetProposal = String(form.get("resetProposal") ?? "") === "1";
     const resetPdf = String(form.get("resetPdf") ?? "") === "1";
 
     if (resetProposal) {
-      try {
-        await fs.unlink(path.join(dir, TV_PUBLIC_PROPOSAL_FILE));
-      } catch {
-        /* ignore */
-      }
-      meta.proposal = false;
-      meta.rev = Date.now();
-      await writeTvPublicMeta(meta);
+      await supabase.storage.from(TV_PUBLIC_STORAGE_BUCKET).remove([proposalPath]);
     }
 
     if (resetPdf) {
-      try {
-        await fs.unlink(path.join(dir, TV_PUBLIC_PDF_FILE));
-      } catch {
-        /* ignore */
-      }
-      meta.pdf = false;
-      meta.rev = Date.now();
-      await writeTvPublicMeta(meta);
+      await supabase.storage.from(TV_PUBLIC_STORAGE_BUCKET).remove([pdfPath]);
     }
 
     const proposalEntry = form.get("proposal");
@@ -65,10 +55,14 @@ export async function POST(req: NextRequest) {
       if (!isPngBuffer(buf)) {
         return NextResponse.json({ error: "invalid-png" }, { status: 400 });
       }
-      await fs.writeFile(path.join(dir, TV_PUBLIC_PROPOSAL_FILE), buf);
-      meta.proposal = true;
-      meta.rev = Date.now();
-      await writeTvPublicMeta(meta);
+      const up = await supabase.storage.from(TV_PUBLIC_STORAGE_BUCKET).upload(proposalPath, buf, {
+        upsert: true,
+        contentType: "image/png",
+      });
+      if (up.error) {
+        console.error("tv-public proposal upload error", up.error);
+        return NextResponse.json({ error: "upload-failed" }, { status: 500 });
+      }
     }
 
     const pdfEntry = form.get("pdf");
@@ -81,14 +75,17 @@ export async function POST(req: NextRequest) {
       if (!isPdfBuffer(buf)) {
         return NextResponse.json({ error: "invalid-pdf" }, { status: 400 });
       }
-      await fs.writeFile(path.join(dir, TV_PUBLIC_PDF_FILE), buf);
-      meta.pdf = true;
-      meta.rev = Date.now();
-      await writeTvPublicMeta(meta);
+      const up = await supabase.storage.from(TV_PUBLIC_STORAGE_BUCKET).upload(pdfPath, buf, {
+        upsert: true,
+        contentType: "application/pdf",
+      });
+      if (up.error) {
+        console.error("tv-public pdf upload error", up.error);
+        return NextResponse.json({ error: "upload-failed" }, { status: 500 });
+      }
     }
 
-    const fresh = await readTvPublicMeta();
-    return NextResponse.json({ ok: true, meta: fresh });
+    return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("tv-public upload POST", e);
     return NextResponse.json({ error: "upload-failed" }, { status: 500 });
