@@ -280,13 +280,13 @@
     function applyMetaToUi(meta) {
       if (meta.proposal) {
         pngPreview.src = meta.proposalUrl || ('/api/tv-public/file/proposal?v=' + meta.rev);
-        pngMeta.textContent = '서버에 등록됨 (모든 브라우저·TV 공통) · rev ' + meta.rev;
+        pngMeta.textContent = '서버에 등록됨 (모든 브라우저·TV 공통)';
       } else {
         pngPreview.src = '/docs/kb-signup.png';
         pngMeta.textContent = '등록 없음 — TV는 기본 제안서 이미지 사용';
       }
       if (meta.pdf) {
-        pdfMeta.textContent = '서버에 등록됨 (공통) · 페이지당 5분 · rev ' + meta.rev;
+        pdfMeta.textContent = '서버에 등록됨 (공통) · 페이지당 5분';
       } else {
         pdfMeta.textContent = '등록 없음 — TV는 기본 PDF 사용';
       }
