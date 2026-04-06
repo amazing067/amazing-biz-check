@@ -148,7 +148,7 @@
 <body>
   <div class="wrap">
     <h1>TV 대시보드 (공용) 자료 등록</h1>
-    <p class="sub">제안서·PDF는 <strong>서버(<code>public/docs</code>)</strong>에 저장되며 Chrome·Edge·TV 등 <strong>모든 기기에서 동일</strong>하게 보입니다. 새 파일을 올리면 이전 파일을 덮어씁니다.</p>
+    <p class="sub">제안서·PDF는 <strong>Supabase Storage</strong>에 저장되며 Chrome·Edge·TV 등 <strong>모든 기기에서 동일</strong>하게 보입니다. 큰 PDF는 앱 서버를 거치지 않고 Storage로 직접 올라갑니다. 새 파일을 올리면 이전 파일을 덮어씁니다.</p>
     <div class="nav">
       <a href="/">← 메인</a>
       <span>·</span>
@@ -174,7 +174,7 @@
 
     <section class="panel">
       <h2 class="title">월간 프라임 (PDF)</h2>
-      <p class="hint">PDF만 등록 가능합니다 ( 한 페이지당 5분). 등록이 없을 때만 TV에 기본 PDF가 쓰입니다. 새 PDF는 서버에서 이전 파일을 덮어씁니다.</p>
+      <p class="hint">PDF만 등록 가능합니다 (한 페이지당 5분). 등록이 없을 때만 TV에 기본 PDF가 쓰입니다. 용량이 커도 Storage 직접 업로드로 제한을 피합니다.</p>
       <div class="meta" id="pdfMeta">저장된 파일: 없음 (서버 기본 PDF 사용)</div>
       <label class="drop" id="pdfDrop" for="pdfInput">
         <strong>PDF 끌어다 놓기 또는 클릭</strong>
@@ -226,6 +226,9 @@
       });
     }
 
+    var MAX_PNG_BYTES = 25 * 1024 * 1024;
+    var MAX_PDF_BYTES = 80 * 1024 * 1024;
+
     var uploadErrorKo = {
       unauthorized: '비밀번호가 맞지 않습니다.',
       'supabase-not-configured': 'Supabase가 설정되지 않았습니다.',
@@ -233,7 +236,11 @@
       'pdf-too-large': 'PDF가 허용 용량(80MB)을 초과했습니다.',
       'invalid-png': 'PNG 형식이 아닙니다.',
       'invalid-pdf': 'PDF 형식이 아닙니다.',
-      'upload-failed': '업로드에 실패했습니다. 잠시 후 다시 시도하세요.'
+      'upload-failed': '업로드에 실패했습니다. 잠시 후 다시 시도하세요.',
+      'invalid-json': '요청 형식이 올바르지 않습니다.',
+      'invalid-kind': '업로드 종류가 올바르지 않습니다.',
+      'sign-failed': '업로드 주소를 받지 못했습니다. Supabase Storage·버킷(tv-public)을 확인하세요.',
+      'signed-upload-failed': 'Storage로 파일 전송에 실패했습니다. 네트워크 또는 Supabase CORS 설정을 확인하세요.'
     };
 
     function uploadErrorMessage(status, rawText, parsed) {
@@ -274,6 +281,58 @@
           }
           return data;
         });
+      });
+    }
+
+    function postJson(url, payload) {
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).then(function (r) {
+        return r.text().then(function (text) {
+          var data = null;
+          if (text) {
+            try {
+              data = JSON.parse(text);
+            } catch (_) {}
+          }
+          if (!r.ok) {
+            throw new Error(uploadErrorMessage(r.status, text, data));
+          }
+          if (!data || typeof data !== 'object') {
+            throw new Error('invalid-response');
+          }
+          return data;
+        });
+      });
+    }
+
+    /** Supabase Storage 서명 업로드와 동일: multipart 필드명 빈 문자열 */
+    function putToSupabaseSignedUrl(signedUrl, file) {
+      var fd = new FormData();
+      fd.append('cacheControl', '3600');
+      fd.append('', file);
+      return fetch(signedUrl, { method: 'PUT', body: fd }).then(function (r) {
+        if (!r.ok) {
+          return r.text().then(function (txt) {
+            var msg = (txt || '').trim();
+            if (msg && msg.length < 240) {
+              throw new Error(msg);
+            }
+            throw new Error(uploadErrorKo['signed-upload-failed']);
+          });
+        }
+      });
+    }
+
+    function uploadViaSignedUrl(kind, file) {
+      return postJson('/api/tv-public/sign-upload', {
+        password: UPLOAD_PASSWORD,
+        kind: kind,
+      }).then(function (sig) {
+        if (!sig.signedUrl) throw new Error(uploadErrorKo['sign-failed']);
+        return putToSupabaseSignedUrl(sig.signedUrl, file);
       });
     }
 
@@ -348,19 +407,21 @@
         alert('PNG 파일만 넣을 수 있습니다.');
         return;
       }
-      var fd = new FormData();
-      fd.append('password', UPLOAD_PASSWORD);
-      fd.append('proposal', file);
-      postUpload(fd)
+      if (file.size > MAX_PNG_BYTES) {
+        setStatus(uploadErrorKo['png-too-large'], true);
+        return;
+      }
+      uploadViaSignedUrl('proposal', file)
         .then(function () {
-          setStatus('서버에 저장했습니다. Chrome·Edge·TV 모두 동일하게 보입니다.');
+          setStatus('저장했습니다. Chrome·Edge·TV 모두 동일하게 보입니다.');
           return fetchMeta();
         })
         .then(function (meta) {
           applyMetaToUi(meta);
         })
         .catch(function (err) {
-          setStatus('PNG 저장 실패: ' + (err.message || '오류'), true);
+          var m = err && err.message ? err.message : '';
+          setStatus('PNG 저장 실패: ' + (uploadErrorKo[m] || m || '오류'), true);
         });
     }
 
@@ -369,19 +430,21 @@
         alert('PDF 파일만 넣을 수 있습니다.');
         return;
       }
-      var fd = new FormData();
-      fd.append('password', UPLOAD_PASSWORD);
-      fd.append('pdf', file);
-      postUpload(fd)
-        .then(function (data) {
-          setStatus('서버에 덮어썼습니다. 이전 PDF는 교체되었습니다.');
+      if (file.size > MAX_PDF_BYTES) {
+        setStatus(uploadErrorKo['pdf-too-large'], true);
+        return;
+      }
+      uploadViaSignedUrl('pdf', file)
+        .then(function () {
+          setStatus('덮어썼습니다. 이전 PDF는 교체되었습니다.');
           return fetchMeta();
         })
         .then(function (meta) {
           applyMetaToUi(meta);
         })
         .catch(function (err) {
-          setStatus('PDF 저장 실패: ' + (err.message || '오류'), true);
+          var m = err && err.message ? err.message : '';
+          setStatus('PDF 저장 실패: ' + (uploadErrorKo[m] || m || '오류'), true);
         });
     }
 
