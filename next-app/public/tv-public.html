@@ -407,26 +407,28 @@
 
           const outW = Math.max(1, Math.floor(containerWidth * dpr));
           const outH = Math.max(1, Math.floor(containerHeight * dpr));
-          canvas.width = outW;
-          canvas.height = outH;
+          if (canvas.width !== outW || canvas.height !== outH) {
+            canvas.width = outW;
+            canvas.height = outH;
+          }
           canvas.style.width = '100%';
           canvas.style.height = '100%';
           canvas.style.objectFit = 'fill';
 
           ctx.setTransform(1, 0, 0, 1, 0, 0);
-          ctx.clearRect(0, 0, outW, outH);
           try {
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
           } catch {}
 
-          bgCanvas.width = outW;
-          bgCanvas.height = outH;
+          if (bgCanvas.width !== outW || bgCanvas.height !== outH) {
+            bgCanvas.width = outW;
+            bgCanvas.height = outH;
+          }
           bgCanvas.style.width = '100%';
           bgCanvas.style.height = '100%';
           bgCanvas.style.objectFit = 'fill';
           bgCtx.setTransform(1, 0, 0, 1, 0, 0);
-          bgCtx.clearRect(0, 0, outW, outH);
 
           function drawCoverCrop(targetCtx, sourceCanvas, dw, dh) {
             var swCanvas = sourceCanvas.width;
@@ -454,6 +456,7 @@
           page
             .render({ canvasContext: octx, viewport: renderVp })
             .promise.then(function () {
+              // 새 프레임 완성 후에만 전경/배경을 교체하여 깜빡임을 줄임
               drawCoverCrop(ctx, off, outW, outH);
               try {
                 bgCtx.filter = 'blur(22px) saturate(1.12) contrast(1.06)';
