@@ -482,8 +482,8 @@
     const damageCardsEl = document.getElementById('damageCards');
     const lifeCardsEl = document.getElementById('lifeCards');
 
-    // 오늘 출근한 매니저: 5명까지 1컬럼, 6~10명은 2컬럼(항상 한눈에)
-    const PRESENT_PAGE_SIZE = 5;
+    // 오늘 출근한 매니저: 6명까지 1컬럼, 7~10명은 2컬럼(항상 한눈에)
+    const PRESENT_PAGE_SIZE = 6;
     const PRESENT_TWO_COL_MAX = 10;
     let presentCache = [];
 
@@ -548,7 +548,7 @@
         return;
       }
 
-      // 6~10명: 2컬럼으로 전체를 항상 보여줌
+      // 7~10명: 2컬럼으로 전체를 항상 보여줌
       if (present.length <= PRESENT_TWO_COL_MAX) {
         presentListEl.classList.add('two-col');
         presentListEl.innerHTML = present.map((r) => presentRowHtml(r)).join('');
